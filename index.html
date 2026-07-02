@@ -458,15 +458,15 @@
         // Web Share API：指定されたURLをベースに共有を行う
         async function shareVideo() {
             // ご指定のカスタムベースURLを使用
-            const basePageUrl = "https://minecraft-jp.github.io/Angoukaangoukaangoukaangoukanananianngouka/";
+            const basePageUrl = "https://minecraft-jp.github.io/Nanani-URL-Shortener/";
             const finalShareUrl = `${basePageUrl}?v=${activeId}`;
             const currentVideo = videos.find(item => item.id === activeId);
 
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        title: X Collection Pro,
-                        text: "ななにー流出,
+                        title: “X Collection Pro”,
+                        text: "ななにー流出”,
                         url: finalShareUrl
                     });
                     showToast("📤 共有メニューを開きました");
