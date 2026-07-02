@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CinemaStream - Minimal Video Player</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandBlack: '#050505',
+                        brandGray: '#121212',
+                        brandRed: '#e50914'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            color: #f3f4f6;
+        }
+        
+        /* シークバー（スライダ本体）タッチ感度極大化デザイン */
+        #seekBar {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+            height: 24px; /* タッチ判定を広げて指で掴みやすく */
+            display: flex;
+            align-items: center;
+        }
+        #seekBar:focus {
+            outline: none;
+        }
+        /* トラック（動的に進捗色を塗るためにグラデーション変数を使用） */
+        #seekBar::-webkit-slider-runnable-track {
+            background: linear-gradient(to right, #e50914 var(--seek-percent, 0%), #2b2b2b var(--seek-percent, 0%));
+            height: 6px;
+            border-radius: 3px;
+            transition: height 0.1s;
+        }
+        #seekBar:hover::-webkit-slider-runnable-track {
+            height: 8px; /* ホバー時に少し太くして操作感アップ */
+        }
+        /* つまみ（丸部分） */
+        #seekBar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #e50914;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            margin-top: -5px; /* (6px - 16px) / 2 = -5px */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        #seekBar:hover::-webkit-slider-thumb {
+            transform: scale(1.2);
+        }
+        #seekBar:active::-webkit-slider-thumb {
+            transform: scale(1.4);
+            background-color: #ff2a33;
+        }
+
+        /* 音量バー（微調整しやすいように当たり判定とつまみを最適化） */
+        #volumeBar {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+            height: 24px; /* タッチ判定エリアをシークバー同様に拡張 */
+            display: flex;
+            align-items: center;
+        }
+        #volumeBar:focus {
+            outline: none;
+        }
+        #volumeBar::-webkit-slider-runnable-track {
+            background: linear-gradient(to right, #ffffff var(--volume-percent, 100%), #2b2b2b var(--volume-percent, 100%));
+            height: 5px; /* トラックの太さをややアップ */
+            border-radius: 2.5px;
+        }
+        #volumeBar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: #ffffff;
+            height: 14px; /* つまみサイズを 12px から 14px にして指の滑りを防ぐ */
+            width: 14px;
+            border-radius: 50%;
+            margin-top: -4.5px; /* (5px - 14px) / 2 = -4.5px */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            transition: transform 0.1s ease;
+        }
+        #volumeBar:hover::-webkit-slider-thumb {
+            transform: scale(1.15);
+        }
+        #volumeBar:active::-webkit-slider-thumb {
+            transform: scale(1.3);
+        }
+
+        /* detailsのアニメーション・リセット */
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        /* フルスクリーン表示時のスタイル補正（コンテナ全体が全画面になっても要素位置を調整） */
+        #videoContainer:fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0px !important;
+            background-color: #000000 !important;
+        }
+        #videoContainer:-webkit-full-screen {
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0px !important;
+            background-color: #000000 !important;
+        }
+
+        /* 【一番かんたん！グラデーション設定】
+           この .gradient クラスを HTML 要素に付けるだけで光ります。
+           例: <span class="gradient">光らせたい文字</span>
+        */
+        @keyframes hashtagFlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        .gradient {
+            background: linear-gradient(to right, #ef4444 0%, #440c0e 50%, #ef4444 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            animation: hashtagFlow 3.5s linear infinite;
+            display: inline-block;
+            font-weight: 700;
+        }
+
+        /* 既存のプレイヤー装飾 */
+        #seekBar::-webkit-slider-runnable-track { background: linear-gradient(to right, #e50914 var(--seek-percent, 0%), #2b2b2b var(--seek-percent, 0%)); height: 6px; border-radius: 3px; }
+        #seekBar::-webkit-slider-thumb { -webkit-appearance: none; background-color: #e50914; height: 16px; width: 16px; border-radius: 50%; margin-top: -5px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-red-600 selection:text-white">
+
+    <!-- メインコンテンツ（ヘッダーなし：美しいシアターレイアウト） -->
+    <div class="max-w-6xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 flex-grow">
+        
+        <!-- 左側：メインビデオプレイヤー ＆ 操作部分 -->
+        <main class="lg:col-span-2 space-y-6">
+            
+            <!-- ビデオプレイヤー（カスタムシネマコントロール、全画面のために id="videoContainer" を追加） -->
+            <div id="videoContainer" class="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-neutral-900 group">
+                <video id="mainPlayer" class="w-full h-full object-contain" playsinline>
+                    <source id="playerSource" src="https://uncertain-sapphire-c9yqbkta.edgeone.dev/22810.mp4" type="video/mp4">
+                </video>
+                
+                <!-- ビデオコントロールUI（マウスホバー時またはタップ時に表示） -->
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-3 z-10">
+                    <!-- シークバー -->
+                    <div class="flex items-center gap-3">
+                        <span id="currentTime" class="text-xs text-neutral-400 font-mono">00:00</span>
+                        <input type="range" id="seekBar" class="w-full" value="0" max="100">
+                        <span id="duration" class="text-xs text-neutral-400 font-mono">00:00</span>
+                    </div>
+                    
+                    <!-- コントロールボタン -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-5">
+                            <!-- 再生 / 一時停止 -->
+                            <button id="playBtn" class="text-white hover:text-red-500 transition-colors">
+                                <i data-lucide="play" class="w-6 h-6 fill-current"></i>
+                            </button>
+                            <!-- 音量設定（微調整用に幅を拡張し、数値テキストを隣に設置） -->
+                            <div class="flex items-center gap-2">
+                                <button id="muteBtn" class="text-white hover:text-neutral-300 transition-colors">
+                                    <i data-lucide="volume-2" class="w-5 h-5"></i>
+                                </button>
+                                <input type="range" id="volumeBar" class="w-20 md:w-28 transition-all" value="100" max="100">
+                                <span id="volumeLevel" class="text-[10px] text-neutral-400 font-mono w-8 text-left select-none">100%</span>
+                            </div>
+                        </div>
+
+                        <!-- 右側：全画面表示 -->
+                        <div class="flex items-center gap-4">
+                            <button id="fullscreenBtn" class="text-white hover:text-red-500 transition-colors" title="全画面">
+                                <i data-lucide="maximize" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 読み込みスピナー -->
+                <div id="videoSpinner" class="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none hidden z-20">
+                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent"></div>
+                </div>
+            </div>
+
+            <!-- 動画情報とアクション -->
+            <div class="bg-brandGray p-6 rounded-3xl border border-neutral-900 space-y-4 shadow-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <h1 id="videoTitle" class="text-xl lg:text-2xl font-black tracking-tight leading-tight text-white">
+                            読み込み中...
+                        </h1>
+                        <p class="text-xs text-neutral-500" id="videoDate">公開日: ----/--/--</p>
+                    </div>
+
+                    <!-- 共有・ダウンロード -->
+                    <div class="flex items-center gap-3">
+                        <!-- 共有ボタン -->
+                        <button onclick="shareVideo()" class="flex items-center gap-2 px-5 py-3 bg-neutral-800 hover:bg-neutral-700 active:scale-95 transition-all rounded-full text-xs font-bold text-gray-200 shadow-md">
+                            <i data-lucide="share-2" class="w-4 h-4 text-blue-400"></i>
+                            <span>共有する</span>
+                        </button>
+
+                        <!-- ダウンロールボタン -->
+                        <button id="downloadBtn" onclick="downloadVideo()" class="flex items-center gap-2 px-5 py-3 bg-neutral-800 hover:bg-neutral-700 active:scale-95 transition-all rounded-full text-xs font-bold text-gray-200 shadow-md">
+                            <i data-lucide="download" class="w-4 h-4 text-green-400"></i>
+                            <span id="downloadBtnText">ダウンロード</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 動画詳細 -->
+                <div class="p-4 bg-black rounded-2xl text-sm leading-relaxed text-neutral-400 border border-neutral-900">
+                    <p id="videoDesc" class="whitespace-pre-line text-xs lg:text-sm text-neutral-400">
+                        動画情報をロード中...
+                    </p>
+                </div>
+            </div>
+        </main>
+
+        <!-- 右側：プレイリスト（他の動画一覧） -->
+        <aside class="space-y-4">
+            <h2 class="text-xs font-black text-neutral-500 flex items-center gap-2 px-1 tracking-wider uppercase">
+                <i data-lucide="play-circle" class="w-4 h-4 text-red-500 animate-pulse"></i>
+                <span>プレイリスト</span>
+            </h2>
+
+            <!-- おすすめ動画リスト -->
+            <div id="playlist" class="space-y-3">
+                <!-- JavaScriptで描画されます -->
+            </div>
+        </aside>
+    </div>
+
+    <!-- ダウンロード解説モーダル（スクロール連動を完全に最適化したコンテナ） -->
+    <div id="downloadModal" class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 hidden">
+        <!-- max-h-[85vh] と flex flex-col で最下部ボタンを常時完全固定化 -->
+        <div id="downloadModalContainer" class="bg-neutral-900 border border-neutral-800 rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col p-6 shadow-2xl">
+            
+            <!-- 固定ヘッダー（スクロールしません） -->
+            <div class="flex justify-between items-center pb-3 border-b border-neutral-800 flex-shrink-0">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="info" class="text-blue-400"></i>
+                    <span>ダウンロード方法</span>
+                </h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-neutral-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <!-- スクロール可能なコンテンツエリア（アコーディオンのみ格納。非常に滑らかにスワイプ可能） -->
+            <div class="overflow-y-auto flex-grow py-4 pr-1 space-y-4 scrollbar-thin">
+                <p class="text-xs text-neutral-400 leading-relaxed">
+                    お使いの端末に合わせてダウンロード手順をご確認ください。（タップで開閉します）
+                </p>
+
+                <div class="space-y-3">
+                    <!-- iPhoneアコーディオン -->
+                    <details class="group bg-black rounded-2xl border border-neutral-800 overflow-hidden" open>
+                        <summary class="flex justify-between items-center p-4 cursor-pointer select-none hover:bg-neutral-950 transition-colors">
+                            <span class="text-sm font-black text-white flex items-center gap-2">
+                                <i data-lucide="smartphone" class="w-4 h-4 text-sky-400"></i>
+                                iPhone
+                            </span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-500 transition-transform duration-200 group-open:rotate-180"></i>
+                        </summary>
+                        <div class="p-4 border-t border-neutral-800 text-xs text-neutral-300 space-y-3 leading-relaxed">
+                            <!-- やり方の上に配置された「動画ダウンロード方法」 -->
+                            <div class="text-base font-extrabold text-white pb-1">動画ダウンロード方法</div>
+                            
+                            <p>
+                                1. こちらを「<a href="https://www.icloud.com/shortcuts/a6ca0b7cf395429bbdef8a541cdd6b1e" target="_blank" class="text-blue-400 underline font-bold hover:text-blue-300">ダウンロード</a>」してください。
+                            </p>
+                            <p>
+                                2. 次に共有マークを押して、先ほどダウンロードしたショートカット（保存）があるので実行してください。
+                            </p>
+                            <p>
+                                3. 初めての場合は、色々表示されると思いますが、ウイルスは入っていませんので「常に許可」を押してください。
+                            </p>
+                            <p>
+                                4. そうするとアラートが出てくるので、それで終了です。
+                            </p>
+                            <div class="pt-2 border-t border-neutral-900 text-neutral-400">
+                                手順を覚えたら「<a id="iphoneDirectLink" href="#" target="_blank" class="text-blue-400 underline font-bold hover:text-blue-300">こちら</a>」
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Androidアコーディオン -->
+                    <details class="group bg-black rounded-2xl border border-neutral-800 overflow-hidden">
+                        <summary class="flex justify-between items-center p-4 cursor-pointer select-none hover:bg-neutral-950 transition-colors">
+                            <span class="text-sm font-black text-white flex items-center gap-2">
+                                <i data-lucide="smartphone" class="w-4 h-4 text-emerald-400"></i>
+                                Android
+                            </span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-500 transition-transform duration-200 group-open:rotate-180"></i>
+                        </summary>
+                        <div class="p-4 border-t border-neutral-800 text-xs text-neutral-300 space-y-3 leading-relaxed">
+                            <!-- やり方の上に配置された「動画ダウンロード方法」 -->
+                            <div class="text-base font-extrabold text-white pb-1">動画ダウンロード方法</div>
+                            
+                            <p>1. 動画を長押しで保存</p>
+                            <div class="pt-2 border-t border-neutral-900 text-neutral-400">
+                                手順を覚えたら「<a id="androidDirectLink" href="#" target="_blank" class="text-blue-400 underline font-bold hover:text-blue-300">こちら</a>」
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <!-- 固定フッター（スクロールせず、画面の一番下に常に居続ける「閉じる」ボタン） -->
+            <div class="pt-3 border-t border-neutral-800 flex-shrink-0">
+                <button id="closeModalBtn" onclick="closeModal()" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 active:scale-95 transition-all text-white rounded-xl text-xs font-bold">
+                    閉じる
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="bg-black border-t border-neutral-950 py-6 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-1">
+            <p class="text-xs text-gray-600">&copy; 2026 StreamView. Premium Cinema Experience.</p>
+        </div>
+    </footer>
+
+    <!-- 通知（トースト） -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300 bg-neutral-900 border border-neutral-800 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <div class="bg-red-600/10 text-red-500 p-1 rounded-md">
+            <i data-lucide="bell" class="w-4 h-4"></i>
+        </div>
+        <span id="toastMsg" class="text-xs font-bold">通知メッセージ</span>
+    </div>
+
+    <!-- スクリプト -->
+    <script>
+        // 動画データベース（すべての動画に個別サムネイルをマッピング）
+        const videos = [
+            {
+                id: 1,
+                // ★【タイトル変更】ここのダブルクォーテーション内を自由に変更できます！
+                title: "ななにーフェラ(第一弾)",
+                url: "https://uncertain-sapphire-c9yqbkta.edgeone.dev/22810.mp4",
+                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-6145d12b-277d-489b-baac-e66a1835a9be.jpg", // 1つ目のサムネイル
+                duration: "0:15",
+                date: "2026/06/29",
+                desc: "Xで公開された動画。\n#フェラ #イラマチオ #エロ #なな #ななにー "
+            },
+            {
+                id: 2,
+                title: "ななにー性行為(第二弾)",
+                url: "https://conventional-indigo-13nr34rd.edgeone.dev/na-na-ni--ha-me_1080p.mp4",
+                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-b5712154-6f49-47b7-b207-6f5c5562f76a.jpg", // 真ん中のサムネイル
+                duration: "0:24",
+                date: "2026/06/29",
+                desc: "Xで公開された動画。\n#セックス #裸 #エロ #なな #ななにー "
+            },
+            {
+                id: 3,
+                title: "ななにーフェラ(第三弾)",
+                url: "https://www.image2url.com/r2/default/videos/1782740560252-5f3262f5-3764-4a12-bb39-e4ca8a96eca5.mp4",
+                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-7cb9c5f8-d513-485a-b394-c46f8d68f273.jpg", // 一番下のサムネイル
+                duration: "0:09",
+                date: "2026/06/29",
+                desc: "Xで公開された動画。\n#フェラ #イラマチオ #エロ #なな #ななにー "
+            }
+        ];
+
+        let activeId = 1;
+
+        // DOM参照
+        const player = document.getElementById("mainPlayer");
+        const playerSrc = document.getElementById("playerSource");
+        const vTitle = document.getElementById("videoTitle");
+        const vDate = document.getElementById("videoDate");
+        const vDesc = document.getElementById("videoDesc");
+        const playBtn = document.getElementById("playBtn");
+        const muteBtn = document.getElementById("muteBtn");
+        const seekBar = document.getElementById("seekBar");
+        const volumeBar = document.getElementById("volumeBar");
+        const volumeLevelText = document.getElementById("volumeLevel");
+        const durationText = document.getElementById("duration");
+        const currentTimeText = document.getElementById("currentTime");
+        const fullscreenBtn = document.getElementById("fullscreenBtn");
+        const playlistContainer = document.getElementById("playlist");
+        const videoSpinner = document.getElementById("videoSpinner");
+
+        window.onload = function() {
+            // URLパラメータによる初期読み込みに対応
+            const params = new URLSearchParams(window.location.search);
+            const vParam = parseInt(params.get('v'));
+            
+            if (vParam && videos.find(v => v.id === vParam)) {
+                activeId = vParam;
+            } else {
+                activeId = 1;
+            }
+
+            loadVideo(activeId);
+            renderPlaylist();
+            lucide.createIcons();
+            setupPlayerEventListeners();
+
+            // 音量バーの初期スタイル適用 (初期値100%)
+            updateVolumeBarUI(100);
+        };
+
+        // ビデオロード処理
+        function loadVideo(id) {
+            const v = videos.find(item => item.id === id);
+            if (!v) return;
+
+            activeId = id;
+            playerSrc.src = v.url;
+            player.load();
+
+            vTitle.textContent = v.title;
+            vDate.textContent = `公開日: ${v.date}`;
+            vDesc.textContent = v.desc;
+
+            renderPlaylist();
+            videoSpinner.classList.remove("hidden");
+
+            // シークバーの見た目を0%にリセット
+            updateSeekBarUI(0);
+
+            player.play().then(() => {
+                playBtn.innerHTML = `<i data-lucide="pause" class="w-6 h-6 fill-current"></i>`;
+                lucide.createIcons();
+            }).catch(() => {
+                playBtn.innerHTML = `<i data-lucide="play" class="w-6 h-6 fill-current"></i>`;
+                lucide.createIcons();
+            });
+        }
+
+        // Web Share API：指定されたURLをベースに共有を行う
+        async function shareVideo() {
+            // ご指定のカスタムベースURLを使用
+            const basePageUrl = "https://minecraft-jp.github.io/Angoukaangoukaangoukaangoukanananianngouka/";
+            const finalShareUrl = `${basePageUrl}?v=${activeId}`;
+            const currentVideo = videos.find(item => item.id === activeId);
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: X Collection Pro,
+                        text: "ななにー流出,
+                        url: finalShareUrl
+                    });
+                    showToast("📤 共有メニューを開きました");
+                } catch (error) {
+                    console.log("共有がキャンセルされました");
+                }
+            } else {
+                const temp = document.createElement("input");
+                temp.value = finalShareUrl;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand("copy");
+                document.body.removeChild(temp);
+                showToast("🔗 リンクをクリップボードにコピーしました！");
+            }
+        }
+
+        // 💥 ブラウザのネイティブダウンロードを呼び出し（失敗時はモーダルへ案内）
+        async function downloadVideo() {
+            const v = videos.find(item => item.id === activeId);
+            if (!v) return;
+
+            const downloadBtn = document.getElementById("downloadBtn");
+            const btnText = document.getElementById("downloadBtnText");
+            
+            // ボタンをローディング中＆進行率表示に変更
+            downloadBtn.disabled = true;
+            btnText.textContent = "準備中...";
+
+            try {
+                // ファイルデータをBlob（バイナリブロック）として取得開始
+                const response = await fetch(v.url);
+                if (!response.ok) throw new Error("Network Response Fail");
+                
+                // プログレス取得のためのリーダー構築
+                const contentLength = +response.headers.get('Content-Length');
+                const reader = response.body.getReader();
+                let receivedLength = 0;
+                let chunks = [];
+
+                while(true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    receivedLength += value.length;
+                    
+                    if (contentLength) {
+                        const percent = Math.round((receivedLength / contentLength) * 100);
+                        btnText.textContent = `${percent}%`;
+                    }
+                }
+
+                // 結合してBlobオブジェクトを作成
+                const blob = new Blob(chunks, { type: "video/mp4" });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                // 完全なダウンロード用アンカーを裏側で作成し、自動クリック
+                const a = document.createElement("a");
+                a.href = blobUrl;
+                const fileName = v.url.substring(v.url.lastIndexOf('/') + 1) || `video_${activeId}.mp4`;
+                a.download = fileName;
+                document.body.appendChild(a);
+                
+                a.click();
+                
+                // 後処理
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+                
+                showToast("✅ ダウンロードをブラウザで開始しました！");
+            } catch (error) {
+                // 万が一CORSポリシー等でfetchが拒否された、または直接モーダルを開きたい場合はこちらへフォールバック
+                console.warn("Blob download failed, showing fallback modal", error);
+                openDownloadModal(v.url);
+            } finally {
+                // ボタンの表示をリセット
+                downloadBtn.disabled = false;
+                btnText.textContent = "ダウンロード";
+            }
+        }
+
+        // ダウンロード方法モーダル表示
+        function openDownloadModal(url) {
+            const modal = document.getElementById("downloadModal");
+            const iphoneLink = document.getElementById("iphoneDirectLink");
+            const androidLink = document.getElementById("androidDirectLink");
+            
+            // iPhone、Androidそれぞれの「こちら」リンクに再生中の動画の直接URLをバインド
+            iphoneLink.href = url;
+            androidLink.href = url;
+            
+            modal.classList.remove("hidden");
+
+            // モーダルオープン時も内部スクロール位置を最上部に初期化
+            const scrollContainer = modal.querySelector('.overflow-y-auto');
+            if (scrollContainer) {
+                scrollContainer.scrollTop = 0;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById("downloadModal").classList.add("hidden");
+        }
+
+        // プレイリスト一覧の描画
+        function renderPlaylist() {
+            playlistContainer.innerHTML = "";
+            videos.forEach(v => {
+                const isActive = v.id === activeId;
+                const card = document.createElement("div");
+                card.onclick = () => loadVideo(v.id);
+                card.className = `group flex gap-3 p-3 rounded-2xl cursor-pointer transition-all border border-transparent ${
+                    isActive ? "bg-neutral-900 border-neutral-800" : "bg-neutral-950/40 hover:bg-neutral-900"
+                }`;
+
+                // サムネイル画像の描画処理
+                const thumbnailHtml = `<img class="absolute inset-0 w-full h-full object-contain bg-black transition-transform group-hover:scale-105 duration-300" src="${v.thumbnail}" alt="${v.title}">`;
+
+                card.innerHTML = `
+                    <div class="relative w-28 lg:w-32 h-16 bg-black rounded-xl overflow-hidden flex-shrink-0 border border-neutral-900">
+                        ${thumbnailHtml}
+                        <span class="absolute bottom-1 right-1 bg-black/80 text-[9px] px-1 rounded font-mono text-white z-10">${v.duration}</span>
+                        ${isActive ? '<div class="absolute inset-0 bg-red-600/20 flex items-center justify-center z-20"><i data-lucide="play" class="w-5 h-5 text-red-500 fill-current"></i></div>' : ''}
+                    </div>
+                    <div class="flex flex-col justify-between py-0.5 min-w-0">
+                        <h3 class="text-xs font-bold text-gray-200 leading-snug line-clamp-2 group-hover:text-red-500 transition-colors">
+                            ${v.title}
+                        </h3>
+                        <p class="text-[10px] text-neutral-500">${v.date}</p>
+                    </div>
+                `;
+                playlistContainer.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // トースト表示
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            const toastMsg = document.getElementById("toastMsg");
+            toastMsg.textContent = msg;
+
+            toast.classList.remove("translate-y-10", "opacity-0", "pointer-events-none");
+            toast.classList.add("translate-y-0", "opacity-100");
+
+            setTimeout(() => {
+                toast.classList.remove("translate-y-0", "opacity-100");
+                toast.classList.add("translate-y-10", "opacity-0", "pointer-events-none");
+            }, 3500);
+        }
+
+        // シークバーとボリュームバーの見た目の割合を変更する関数 (CSS変数制御)
+        function updateSeekBarUI(percent) {
+            seekBar.value = percent;
+            seekBar.style.setProperty('--seek-percent', `${percent}%`);
+        }
+
+        // 音量バーのCSSカスタムプロパティと、右隣の％テキストを動的に更新
+        function updateVolumeBarUI(percent) {
+            volumeBar.value = percent;
+            volumeBar.style.setProperty('--volume-percent', `${percent}%`);
+            volumeLevelText.textContent = `${percent}%`;
+        }
+
+        // 全画面表示の切替制御
+        function toggleFullscreen() {
+            const container = document.getElementById("videoContainer");
+            
+            // iPhone (iOS) Safari 向けのネイティブフルスクリーン対応
+            if (player.webkitEnterFullscreen && /iPhone|iPod/.test(navigator.userAgent)) {
+                player.webkitEnterFullscreen();
+                return;
+            }
+
+            if (!document.fullscreenElement && 
+                !document.webkitFullscreenElement && 
+                !document.mozFullScreenElement && 
+                !document.msFullscreenElement) {
+                // 各種ブラウザ規格に対応したフルスクリーン起動
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.mozRequestFullScreen) {
+                    container.mozRequestFullScreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+            } else {
+                // フルスクリーン終了
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        // フルスクリーン状態が変化した際のイベント検知
+        function onFullscreenChange() {
+            const isFull = document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement;
+            
+            if (isFull) {
+                // 閉じる状態のアイコンに切り替え
+                fullscreenBtn.innerHTML = `<i data-lucide="minimize" class="w-5 h-5"></i>`;
+                document.getElementById("videoContainer").classList.remove("rounded-3xl");
+            } else {
+                // 開く状態のアイコンに切り替え
+                fullscreenBtn.innerHTML = `<i data-lucide="maximize" class="w-5 h-5"></i>`;
+                document.getElementById("videoContainer").classList.add("rounded-3xl");
+            }
+            lucide.createIcons();
+        }
+
+        // 各種ブラウザのフルスクリーン変化イベント登録
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+        document.addEventListener('mozfullscreenchange', onFullscreenChange);
+        document.addEventListener('MSFullscreenChange', onFullscreenChange);
+
+        // ビデオコントロールの設定
+        function setupPlayerEventListeners() {
+            let isDragging = false; // ドラッグ中判定フラグ
+
+            playBtn.onclick = togglePlay;
+            player.onclick = togglePlay;
+
+            player.oncanplay = () => videoSpinner.classList.add("hidden");
+            player.onwaiting = () => videoSpinner.classList.remove("hidden");
+
+            // 動画再生中の更新イベント
+            player.ontimeupdate = () => {
+                // スライド操作中でないときだけ時間・つまみ位置を連動 (カクツキ・揺れ戻し防止)
+                if (!isDragging && !isNaN(player.duration)) {
+                    const value = (player.currentTime / player.duration) * 100;
+                    updateSeekBarUI(value);
+                    currentTimeText.textContent = formatTime(player.currentTime);
+                }
+            };
+
+            player.onloadedmetadata = () => {
+                durationText.textContent = formatTime(player.duration);
+            };
+
+            // ドラッグ開始
+            const startDrag = () => {
+                isDragging = true;
+            };
+
+            // ドラッグ終了 (再生位置の適用)
+            const endDrag = () => {
+                if (isDragging) {
+                    isDragging = false;
+                    if (!isNaN(player.duration)) {
+                        const time = (seekBar.value / 100) * player.duration;
+                        player.currentTime = time;
+                    }
+                }
+            };
+
+            // マウス、タッチ双方のアクションに対応
+            seekBar.addEventListener('mousedown', startDrag);
+            seekBar.addEventListener('touchstart', startDrag);
+
+            seekBar.addEventListener('input', () => {
+                const percent = seekBar.value;
+                seekBar.style.setProperty('--seek-percent', `${percent}%`);
+                if (!isNaN(player.duration)) {
+                    const time = (percent / 100) * player.duration;
+                    currentTimeText.textContent = formatTime(time);
+                    
+                    // モバイル性能を考慮し、input中にリアルタイムシークを適用
+                    player.currentTime = time;
+                }
+            });
+
+            // 指が離れたとき
+            seekBar.addEventListener('change', endDrag);
+
+            // シューター範囲外で離された場合のための安全イベント登録
+            window.addEventListener('mouseup', endDrag);
+            window.addEventListener('touchend', endDrag);
+
+            // ボリュームバーの設定（1%きざみでの変更をリアルタイム反映）
+            volumeBar.addEventListener('input', () => {
+                const val = volumeBar.value;
+                player.volume = val / 100;
+                player.muted = player.volume === 0;
+                updateVolumeBarUI(val);
+                updateVolumeIcon();
+            });
+
+            muteBtn.onclick = () => {
+                player.muted = !player.muted;
+                if (player.muted) {
+                    updateVolumeBarUI(0);
+                } else {
+                    updateVolumeBarUI(Math.round(player.volume * 100));
+                }
+                updateVolumeIcon();
+            };
+
+            // フルスクリーンボタン押下時の割り当て変更
+            fullscreenBtn.onclick = toggleFullscreen;
+        }
+
+        // 再生／一時停止のトグル
+        function togglePlay() {
+            if (player.paused) {
+                player.play();
+                playBtn.innerHTML = `<i data-lucide="pause" class="w-6 h-6 fill-current"></i>`;
+            } else {
+                player.pause();
+                playBtn.innerHTML = `<i data-lucide="play" class="w-6 h-6 fill-current"></i>`;
+            }
+            lucide.createIcons();
+        }
+
+        // 音量アイコンの切り替え
+        function updateVolumeIcon() {
+            if (player.muted || player.volume === 0) {
+                muteBtn.innerHTML = `<i data-lucide="volume-x" class="w-5 h-5 text-red-500"></i>`;
+            } else if (player.volume < 0.5) {
+                muteBtn.innerHTML = `<i data-lucide="volume-1" class="w-5 h-5"></i>`;
+            } else {
+                muteBtn.innerHTML = `<i data-lucide="volume-2" class="w-5 h-5"></i>`;
+            }
+            lucide.createIcons();
+        }
+
+        // 時間フォーマット変換 (00:00)
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+    </script>
+</body>
+</html>
