@@ -151,13 +151,13 @@
         <!-- 左側：メインビデオプレイヤー ＆ 操作部分 -->
         <main class="lg:col-span-2 space-y-6">
             
-            <!-- ビデオプレイヤー -->
+            <!-- ビデオプレイヤー（カスタムシネマコントロール、全画面のために id="videoContainer" を追加） -->
             <div id="videoContainer" class="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-neutral-900 group">
                 <video id="mainPlayer" class="w-full h-full object-contain" playsinline>
                     <source id="playerSource" src="" type="video/mp4">
                 </video>
                 
-                <!-- ビデオコントロールUI -->
+                <!-- ビデオコントロールUI（マウスホバー時またはタップ時に表示） -->
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-3 z-10">
                     <!-- シークバー -->
                     <div class="flex items-center gap-3">
@@ -173,7 +173,7 @@
                             <button id="playBtn" class="text-white hover:text-red-500 transition-colors">
                                 <i data-lucide="play" class="w-6 h-6 fill-current"></i>
                             </button>
-                            <!-- 音量設定 -->
+                            <!-- 音量設定（微調整用に幅を拡張し、数値テキストを隣に設置） -->
                             <div class="flex items-center gap-2">
                                 <button id="muteBtn" class="text-white hover:text-neutral-300 transition-colors">
                                     <i data-lucide="volume-2" class="w-5 h-5"></i>
@@ -344,13 +344,14 @@
 
     <!-- スクリプト -->
     <script>
+        // 動画データベース（全4作品：1から4までのサムネイルを修復・統合）
         const videos = [
             {
                 id: 1,
                 title: "ななにーフェラ(第一弾)",
                 url: "https://uncertain-sapphire-c9yqbkta.edgeone.dev/22810.mp4",
                 thumbnail: "https://cdn.phototourl.com/free/2026-06-29-6145d12b-277d-489b-baac-e66a1835a9be.jpg",
-                duration: "0:15",
+                duration: "0:37",
                 date: "2026/06/29",
                 desc: "Xで公開された動画。\n#フェラ #イラマチオ #エロ #なな #ななにー "
             },
@@ -358,8 +359,8 @@
                 id: 2,
                 title: "ななにー性行為(第二弾)",
                 url: "https://conventional-indigo-13nr34rd.edgeone.dev/na-na-ni--ha-me_1080p.mp4",
-                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-b5712154-6f49-47b7-b207-6f5c5562f76a.jpg",
-                duration: "0:24",
+                thumbnail: "https://cdn.phototourl.com/free/2026-07-02-69eb0810-37a9-4ca4-a95e-a5d2e6b8780b.jpg",
+                duration: "0:42",
                 date: "2026/06/29",
                 desc: "Xで公開された動画。\n#セックス #裸 #エロ #なな #ななにー "
             },
@@ -367,10 +368,19 @@
                 id: 3,
                 title: "ななにーフェラ(第三弾)",
                 url: "https://www.image2url.com/r2/default/videos/1782740560252-5f3262f5-3764-4a12-bb39-e4ca8a96eca5.mp4",
-                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-7cb9c5f8-d513-485a-b394-c46f8d68f273.jpg",
-                duration: "0:09",
+                thumbnail: "https://cdn.phototourl.com/free/2026-07-02-763618b7-f7d4-4b8f-bef2-64bb552b17eb.jpg",
+                duration: "0:46",
                 date: "2026/06/29",
                 desc: "Xで公開された動画。\n#フェラ #イラマチオ #エロ #なな #ななにー "
+            },
+            {
+                id: 4,
+                title: "ななにーハメ(第四弾)",
+                url: "https://puny-beige-y2cbf6c3.edgeone.dev/23725_720p.mp4",
+                thumbnail: "https://cdn.phototourl.com/free/2026-07-02-9154b21a-9736-412b-8fae-809e7db8556f.jpg",
+                duration: "0:58",
+                date: "2026/07/02",
+                desc: "Xで公開された動画。\n#セックス #生ハメ #エロ #なな #ななにー "
             }
         ];
 
@@ -451,12 +461,16 @@
 
             activeId = id;
             playerSrc.src = v.url;
+            
+            // 読み込み時に動画プレイヤーにサムネイル（ポスター画像）を適用します。
+            player.poster = v.thumbnail;
+            
             player.load();
 
             vTitle.textContent = v.title;
             vDate.textContent = `公開日: ${v.date}`;
             
-            // 修正：ハッシュタグ全体にグラデーションを効かせてからHTMLに出力
+            // ハッシュタグ全体にグラデーションを効かせてからHTMLに出力
             vDesc.innerHTML = formatHashtags(v.desc);
 
             renderPlaylist();
@@ -483,7 +497,6 @@
 
             if (navigator.share) {
                 try {
-                    // ★全角の “ ” を半角の " " に完全に修正し、スペースも安全に対応しました！
                     await navigator.share({
                         title: "X Collection Pro",
                         text: "ななにー流出",
@@ -812,7 +825,7 @@
             lucide.createIcons();
         }
 
-        // 音量アイコン of the video
+        // 音量アイコンの切り替え
         function updateVolumeIcon() {
             if (player.muted || player.volume === 0) {
                 muteBtn.innerHTML = `<i data-lucide="volume-x" class="w-5 h-5 text-red-500"></i>`;
