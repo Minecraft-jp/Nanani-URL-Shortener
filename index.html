@@ -125,15 +125,12 @@
             background-color: #000000 !important;
         }
 
-        /* 【一番かんたん！グラデーション設定】
-           この .gradient クラスを HTML 要素に付けるだけで光ります。
-           例: <span class="gradient">光らせたい文字</span>
-        */
+        /* 【グラデーション設定】ハッシュタグ全体を一括で左から右に流すアニメーション */
         @keyframes hashtagFlow {
             0% { background-position: 0% 50%; }
             100% { background-position: 200% 50%; }
         }
-        .gradient {
+        .hashtag-container-gradient, .gradient {
             background: linear-gradient(to right, #ef4444 0%, #440c0e 50%, #ef4444 100%);
             background-size: 200% auto;
             -webkit-background-clip: text;
@@ -144,10 +141,6 @@
             display: inline-block;
             font-weight: 700;
         }
-
-        /* 既存のプレイヤー装飾 */
-        #seekBar::-webkit-slider-runnable-track { background: linear-gradient(to right, #e50914 var(--seek-percent, 0%), #2b2b2b var(--seek-percent, 0%)); height: 6px; border-radius: 3px; }
-        #seekBar::-webkit-slider-thumb { -webkit-appearance: none; background-color: #e50914; height: 16px; width: 16px; border-radius: 50%; margin-top: -5px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-red-600 selection:text-white">
@@ -158,13 +151,13 @@
         <!-- 左側：メインビデオプレイヤー ＆ 操作部分 -->
         <main class="lg:col-span-2 space-y-6">
             
-            <!-- ビデオプレイヤー（カスタムシネマコントロール、全画面のために id="videoContainer" を追加） -->
+            <!-- ビデオプレイヤー -->
             <div id="videoContainer" class="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border border-neutral-900 group">
                 <video id="mainPlayer" class="w-full h-full object-contain" playsinline>
-                    <source id="playerSource" src="https://uncertain-sapphire-c9yqbkta.edgeone.dev/22810.mp4" type="video/mp4">
+                    <source id="playerSource" src="" type="video/mp4">
                 </video>
                 
-                <!-- ビデオコントロールUI（マウスホバー時またはタップ時に表示） -->
+                <!-- ビデオコントロールUI -->
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-3 z-10">
                     <!-- シークバー -->
                     <div class="flex items-center gap-3">
@@ -180,7 +173,7 @@
                             <button id="playBtn" class="text-white hover:text-red-500 transition-colors">
                                 <i data-lucide="play" class="w-6 h-6 fill-current"></i>
                             </button>
-                            <!-- 音量設定（微調整用に幅を拡張し、数値テキストを隣に設置） -->
+                            <!-- 音量設定 -->
                             <div class="flex items-center gap-2">
                                 <button id="muteBtn" class="text-white hover:text-neutral-300 transition-colors">
                                     <i data-lucide="volume-2" class="w-5 h-5"></i>
@@ -254,12 +247,11 @@
         </aside>
     </div>
 
-    <!-- ダウンロード解説モーダル（スクロール連動を完全に最適化したコンテナ） -->
+    <!-- ダウンロード解説モーダル -->
     <div id="downloadModal" class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 hidden">
-        <!-- max-h-[85vh] と flex flex-col で最下部ボタンを常時完全固定化 -->
         <div id="downloadModalContainer" class="bg-neutral-900 border border-neutral-800 rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col p-6 shadow-2xl">
             
-            <!-- 固定ヘッダー（スクロールしません） -->
+            <!-- 固定ヘッダー -->
             <div class="flex justify-between items-center pb-3 border-b border-neutral-800 flex-shrink-0">
                 <h3 class="text-lg font-bold text-white flex items-center gap-2">
                     <i data-lucide="info" class="text-blue-400"></i>
@@ -270,7 +262,7 @@
                 </button>
             </div>
             
-            <!-- スクロール可能なコンテンツエリア（アコーディオンのみ格納。非常に滑らかにスワイプ可能） -->
+            <!-- スクロール可能なコンテンツエリア -->
             <div class="overflow-y-auto flex-grow py-4 pr-1 space-y-4 scrollbar-thin">
                 <p class="text-xs text-neutral-400 leading-relaxed">
                     お使いの端末に合わせてダウンロード手順をご確認ください。（タップで開閉します）
@@ -287,11 +279,9 @@
                             <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-500 transition-transform duration-200 group-open:rotate-180"></i>
                         </summary>
                         <div class="p-4 border-t border-neutral-800 text-xs text-neutral-300 space-y-3 leading-relaxed">
-                            <!-- やり方の上に配置された「動画ダウンロード方法」 -->
                             <div class="text-base font-extrabold text-white pb-1">動画ダウンロード方法</div>
-                            
                             <p>
-                                1. こちらを「<a href="https://www.icloud.com/shortcuts/a6ca0b7cf395429bbdef8a541cdd6b1e" target="_blank" class="text-blue-400 underline font-bold hover:text-blue-300">ダウンロード</a>」してください。
+                                1. こちらを「<a href="https://www.icloud.com/shortcuts/a6ca0b7cf395429bbdef8a541cdd6b1e" target="_blank" class="gradient underline font-bold hover:opacity-80 transition-opacity">ダウンロード</a>」してください。
                             </p>
                             <p>
                                 2. 次に共有マークを押して、先ほどダウンロードしたショートカット（保存）があるので実行してください。
@@ -303,7 +293,7 @@
                                 4. そうするとアラートが出てくるので、それで終了です。
                             </p>
                             <div class="pt-2 border-t border-neutral-900 text-neutral-400">
-                                手順を覚えたら「<a id="iphoneDirectLink" href="#" target="_blank" class="text-blue-400 underline font-bold hover:text-blue-300">こちら</a>」
+                                手順を覚えたら「<a id="iphoneDirectLink" href="#" target="_blank" class="gradient underline font-bold hover:opacity-80 transition-opacity">こちら</a>」
                             </div>
                         </div>
                     </details>
@@ -318,19 +308,17 @@
                             <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-500 transition-transform duration-200 group-open:rotate-180"></i>
                         </summary>
                         <div class="p-4 border-t border-neutral-800 text-xs text-neutral-300 space-y-3 leading-relaxed">
-                            <!-- やり方の上に配置された「動画ダウンロード方法」 -->
                             <div class="text-base font-extrabold text-white pb-1">動画ダウンロード方法</div>
-                            
                             <p>1. 動画を長押しで保存</p>
                             <div class="pt-2 border-t border-neutral-900 text-neutral-400">
-                                手順を覚えたら「<a id="androidDirectLink" href="#" target="_blank" class="text-blue-400 underline font-bold hover:text-blue-300">こちら</a>」
+                                手順を覚えたら「<a id="androidDirectLink" href="#" target="_blank" class="gradient underline font-bold hover:opacity-80 transition-opacity">こちら</a>」
                             </div>
                         </div>
                     </details>
                 </div>
             </div>
 
-            <!-- 固定フッター（スクロールせず、画面の一番下に常に居続ける「閉じる」ボタン） -->
+            <!-- 固定フッター -->
             <div class="pt-3 border-t border-neutral-800 flex-shrink-0">
                 <button id="closeModalBtn" onclick="closeModal()" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 active:scale-95 transition-all text-white rounded-xl text-xs font-bold">
                     閉じる
@@ -356,14 +344,12 @@
 
     <!-- スクリプト -->
     <script>
-        // 動画データベース（すべての動画に個別サムネイルをマッピング）
         const videos = [
             {
                 id: 1,
-                // ★【タイトル変更】ここのダブルクォーテーション内を自由に変更できます！
                 title: "ななにーフェラ(第一弾)",
                 url: "https://uncertain-sapphire-c9yqbkta.edgeone.dev/22810.mp4",
-                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-6145d12b-277d-489b-baac-e66a1835a9be.jpg", // 1つ目のサムネイル
+                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-6145d12b-277d-489b-baac-e66a1835a9be.jpg",
                 duration: "0:15",
                 date: "2026/06/29",
                 desc: "Xで公開された動画。\n#フェラ #イラマチオ #エロ #なな #ななにー "
@@ -372,7 +358,7 @@
                 id: 2,
                 title: "ななにー性行為(第二弾)",
                 url: "https://conventional-indigo-13nr34rd.edgeone.dev/na-na-ni--ha-me_1080p.mp4",
-                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-b5712154-6f49-47b7-b207-6f5c5562f76a.jpg", // 真ん中のサムネイル
+                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-b5712154-6f49-47b7-b207-6f5c5562f76a.jpg",
                 duration: "0:24",
                 date: "2026/06/29",
                 desc: "Xで公開された動画。\n#セックス #裸 #エロ #なな #ななにー "
@@ -381,7 +367,7 @@
                 id: 3,
                 title: "ななにーフェラ(第三弾)",
                 url: "https://www.image2url.com/r2/default/videos/1782740560252-5f3262f5-3764-4a12-bb39-e4ca8a96eca5.mp4",
-                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-7cb9c5f8-d513-485a-b394-c46f8d68f273.jpg", // 一番下のサムネイル
+                thumbnail: "https://cdn.phototourl.com/free/2026-06-29-7cb9c5f8-d513-485a-b394-c46f8d68f273.jpg",
                 duration: "0:09",
                 date: "2026/06/29",
                 desc: "Xで公開された動画。\n#フェラ #イラマチオ #エロ #なな #ななにー "
@@ -427,6 +413,37 @@
             updateVolumeBarUI(100);
         };
 
+        // ハッシュタグエリア全体を囲み、左から右へつながるグラデーションアニメーションを適用するフォーマッター
+        function formatHashtags(text) {
+            if (!text) return "";
+            
+            // XSS脆弱性を防ぐため、HTMLタグに解釈される文字を事前に安全にエスケープ処理
+            let escaped = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+            // 各行に分割
+            const lines = escaped.split('\n');
+            const processedLines = lines.map(line => {
+                const hasHashtags = /[#＃]/.test(line);
+                if (hasHashtags) {
+                    const hashtagPattern = /([#＃][^\s#＃]+)/g;
+                    const matchedTags = line.match(hashtagPattern);
+                    
+                    if (matchedTags) {
+                        const wrappedSection = `<span class="hashtag-container-gradient">${matchedTags.join(' ')}</span>`;
+                        return wrappedSection;
+                    }
+                }
+                return line;
+            });
+
+            return processedLines.join('<br>');
+        }
+
         // ビデオロード処理
         function loadVideo(id) {
             const v = videos.find(item => item.id === id);
@@ -438,7 +455,9 @@
 
             vTitle.textContent = v.title;
             vDate.textContent = `公開日: ${v.date}`;
-            vDesc.textContent = v.desc;
+            
+            // 修正：ハッシュタグ全体にグラデーションを効かせてからHTMLに出力
+            vDesc.innerHTML = formatHashtags(v.desc);
 
             renderPlaylist();
             videoSpinner.classList.remove("hidden");
@@ -464,9 +483,10 @@
 
             if (navigator.share) {
                 try {
+                    // ★全角の “ ” を半角の " " に完全に修正し、スペースも安全に対応しました！
                     await navigator.share({
-                        title: “X Collection Pro”,
-                        text: “ななにー流出”,
+                        title: "X Collection Pro",
+                        text: "ななにー流出",
                         url: finalShareUrl
                     });
                     showToast("📤 共有メニューを開きました");
@@ -792,7 +812,7 @@
             lucide.createIcons();
         }
 
-        // 音量アイコンの切り替え
+        // 音量アイコン of the video
         function updateVolumeIcon() {
             if (player.muted || player.volume === 0) {
                 muteBtn.innerHTML = `<i data-lucide="volume-x" class="w-5 h-5 text-red-500"></i>`;
