@@ -474,7 +474,7 @@
             appConfig[key] = value;
             if (key === 'playbackRate' && player) {
                 player.playbackRate = value;
-                showToast(`🚀 再生速度を ${value}x に変更しました`);
+                showToast(`再生速度を ${value}x に変更しました`);
             }
             if (key === 'loop' && player) {
                 player.loop = value;
@@ -482,13 +482,13 @@
                     appConfig.autoNext = false; // ループ時は連続再生をOFFにする
                     document.getElementById('config-autoNext').checked = false;
                 }
-                showToast(value ? "🔁 ループ再生: ON" : "➡️ ループ再生: OFF");
+                showToast(value ? "ループ再生: ON" : "ループ再生: OFF");
             }
             if (key === 'autoNext' && value) {
                 appConfig.loop = false; // 連続再生時はループをOFFにする
                 document.getElementById('config-loop').checked = false;
                 if(player) player.loop = false;
-                showToast("⏭️ 連続再生: ON");
+                showToast("連続再生: ON");
             }
         }
 
@@ -924,7 +924,7 @@
                 if (!appConfig.loop && appConfig.autoNext) {
                     let currentIndex = videos.findIndex(v => v.id === activeId);
                     let nextIndex = (currentIndex + 1) % videos.length; // 最後なら最初に戻る
-                    showToast("⏭️ 次の動画を再生します...");
+                    showToast("次の動画を再生します...");
                     setTimeout(() => {
                         loadVideo(videos[nextIndex].id);
                     }, 1500);
