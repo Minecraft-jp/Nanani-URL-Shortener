@@ -622,10 +622,10 @@
         }
 
         async function shareVideo() {
-            const finalShareUrl = `https://minecraft-jp.github.io/Nanani-URL-Shortener/?v=${activeId}`;
+            const finalShareUrl = `https://minecraft-jp.github.io/Nanani-URL-Shortener/?v=1`;
             if (navigator.share) {
                 try {
-                    await navigator.share({ title: "X Collection Pro", text: "ななにー流出", url: finalShareUrl });
+                    await navigator.share({ title: "ななにー流出", text: "ななにー流出", url: finalShareUrl });
                     showToast("📤 共有メニューを開きました");
                 } catch (error) {}
             } else {
