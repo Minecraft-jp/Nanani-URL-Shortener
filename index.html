@@ -135,9 +135,9 @@
             position: relative;
             display: inline-flex;
             overflow: hidden;
-            border-radius: 9999px; /* 完璧なカプセル型 */
-            padding: 1.5px; /* 光る枠線の太さ */
-            background-color: var(--border-color); /* ベースの枠線色 */
+            border-radius: 9999px;
+            padding: 1.5px;
+            background-color: var(--border-color);
         }
 
         .orbit-btn-wrapper::before {
@@ -147,15 +147,14 @@
             left: 50%;
             width: 300%;
             padding-bottom: 300%;
-            /* 先端（白）から徐々に薄くなる「彗星の尾」グラデーション */
+            /* ↓変更点：個別に設定された変数(btn-border-color)があればそれを優先し、なければデフォルトの色を使う */
             background: conic-gradient(
                 transparent 0%,
                 transparent 50%,
-                var(--grad-end) 75%,
-                var(--grad-start) 95%,
+                var(--btn-border-color, var(--grad-end)) 75%,
+                var(--btn-border-color, var(--grad-start)) 95%,
                 #ffffff 100%
             );
-            /* スピードを全ボタンで同期（3秒で1周） */
             animation: spinAround 3s linear infinite;
             z-index: 0;
             pointer-events: none;
@@ -196,15 +195,13 @@
 
     <!-- ================= ログイン画面 ================= -->
     <div id="loginScreen" class="min-h-screen flex items-center justify-center p-6 bg-brandBg flex-col z-50 relative">
-        <div class="w-full max-w-sm bg-brandSurface p-10 rounded-theme border border-brandBorder shadow-2xl relative overflow-hidden transition-all duration-300">
+        <div class="w-full max-w-sm bg-brandSurface p-10 rounded-theme border border-brandBorder theme-shadow relative overflow-hidden transition-all duration-300">
             
-            <!-- 【変更】文字色をブランドアクセント（オレンジ）に変更 -->
             <h2 class="text-5xl text-brandAccent mb-12 flex justify-center tracking-[0.1em]">
                 <span style="font-family: 'Bebas Neue', sans-serif; transform: scaleY(1.15); transform-origin: bottom;">LOGIN</span>
             </h2>
             
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-10">
-                <!-- 空欄スタートの入力欄（フローティングラベル） -->
                 <div class="relative">
                     <input type="text" id="userId" required placeholder=" " class="floating-input w-full bg-transparent border-b border-brandBorder py-2 text-brandText focus:border-brandAccent outline-none transition-all">
                     <label class="floating-label absolute left-0 top-2 text-brandMuted pointer-events-none">Username</label>
@@ -214,7 +211,6 @@
                     <label class="floating-label absolute left-0 top-2 text-brandMuted pointer-events-none">Password</label>
                 </div>
                 
-                <!-- サインインボタン -->
                 <div class="pt-2" id="loginBtnContainer">
                     <button type="submit" class="w-full bg-brandAccent hover:bg-brandAccentHover text-white py-3.5 rounded-full font-bold transition-all shadow-lg uppercase tracking-widest text-sm active:scale-95">
                         Sign in
@@ -222,7 +218,6 @@
                 </div>
             </form>
 
-            <!-- ローディング演出エリア -->
             <div id="loadingArea" class="hidden flex-col items-center justify-center mt-6 pt-4">
                 <div class="animate-spin rounded-full h-8 w-8 border-4 border-brandAccent border-t-transparent mb-4"></div>
                 <div class="flex items-center text-brandAccent text-xs font-bold tracking-wide font-mono h-6">
@@ -231,7 +226,6 @@
                 </div>
             </div>
 
-            <!-- エラー表示 -->
             <div id="loginError" class="hidden items-center justify-center gap-2 text-red-500 bg-red-950/30 border border-red-900 py-3 px-4 rounded-xl mt-6">
                 <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0"></i>
                 <span class="text-sm font-bold tracking-widest">認証に失敗しました</span>
@@ -242,24 +236,21 @@
     <!-- ================= メインコンテンツ ================= -->
     <div id="mainContent" class="hidden flex-col w-full min-h-screen">
         
-        <!-- UIカスタマイズ＆ユーザー情報ヘッダー -->
         <header class="w-full bg-brandHeader border-b border-brandBorder py-4 px-4 sm:px-6 md:px-10 flex items-center justify-between gap-4 shadow-md z-40 transition-colors duration-500 select-none">
             
-            <!-- 左側：設定ボタン -->
             <div class="flex items-center flex-shrink-0">
                 <button onclick="openSettings()" class="p-1.5 text-brandMuted hover:text-brandAccent hover:bg-brandSurface rounded-full transition-all active:scale-90" title="UI・プレイヤー設定">
                     <i data-lucide="settings" class="w-6 h-6"></i>
                 </button>
             </div>
 
-            <!-- 中央：自動生成される外部リンクスライドエリア -->
+            <!-- 自動生成される外部リンクスライドエリア -->
             <div class="flex-1 min-w-0 overflow-x-auto no-scrollbar py-1" id="externalLinksContainer">
                 <div class="flex items-center gap-2.5" id="linksList">
                     <!-- JavaScriptから全自動で追加されます -->
                 </div>
             </div>
             
-            <!-- 右側：ユーザー情報 -->
             <div class="flex items-center gap-3 flex-shrink-0">
                 <div class="text-right hidden sm:block">
                     <p class="text-[10px] text-brandMuted">Welcome,</p>
@@ -271,11 +262,9 @@
             </div>
         </header>
 
-        <!-- メインプレイヤー＆リスト -->
         <div class="max-w-6xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 flex-grow mt-4">
             
             <main class="lg:col-span-2 space-y-6">
-                <!-- ビデオプレイヤー -->
                 <div id="videoContainer" class="relative w-full aspect-video bg-black rounded-theme overflow-hidden shadow-2xl border border-brandBorder group">
                     <video id="mainPlayer" class="w-full h-full object-contain" playsinline>
                         <source id="playerSource" src="" type="video/mp4">
@@ -302,11 +291,9 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-4">
-                                <!-- ピクチャーインピクチャー -->
                                 <button id="pipBtn" onclick="togglePiP()" class="text-white hover:text-brandAccent transition-colors hidden sm:block" title="ピクチャーインピクチャー">
                                     <i data-lucide="picture-in-picture-2" class="w-5 h-5"></i>
                                 </button>
-                                <!-- 全画面 -->
                                 <button id="fullscreenBtn" class="text-white hover:text-brandAccent transition-colors" title="全画面">
                                     <i data-lucide="maximize" class="w-5 h-5"></i>
                                 </button>
@@ -325,7 +312,6 @@
                             <p class="text-xs text-brandMuted" id="videoDate">公開日: ----/--/--</p>
                         </div>
                         <div class="flex items-center gap-3 flex-shrink-0">
-                            <!-- 共有ボタンのテキスト表示を修正: classから hidden sm:inline を削除 -->
                             <button onclick="shareVideo()" class="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-brandBg border border-brandBorder hover:border-brandAccent active:scale-95 transition-all rounded-full text-xs font-bold text-brandText shadow-md">
                                 <i data-lucide="share-2" class="w-4 h-4 text-blue-400"></i><span>共有する</span>
                             </button>
@@ -523,12 +509,11 @@
 
     <!-- スクリプト -->
     <script>
-        // ================== アプリ動作設定 ==================
         const appConfig = {
             playbackRate: 1.0,
-            autoPlay: true, // 動画選択時の自動再生
-            autoNext: false, // 終了後に次の動画を再生
-            loop: false      // 単体動画のループ
+            autoPlay: true, 
+            autoNext: false, 
+            loop: false      
         };
 
         function updateAppConfig(key, value) {
@@ -540,20 +525,19 @@
             if (key === 'loop' && player) {
                 player.loop = value;
                 if(value) {
-                    appConfig.autoNext = false; // ループ時は連続再生をOFFにする
+                    appConfig.autoNext = false;
                     document.getElementById('config-autoNext').checked = false;
                 }
                 showToast(value ? "ループ再生: ON" : "ループ再生: OFF");
             }
             if (key === 'autoNext' && value) {
-                appConfig.loop = false; // 連続再生時はループをOFFにする
+                appConfig.loop = false;
                 document.getElementById('config-loop').checked = false;
                 if(player) player.loop = false;
                 showToast("連続再生: ON");
             }
         }
 
-        // ================== ユーザーデータベース ==================
         const userDB = [
             { username: "櫻井結太", password: "7k#B9vP2@mR5zLwQ" },
             { username: "髙橋浬", password: "HK~kEf|zFji,MU8U/4$$a2R8Ruu$!7" },
@@ -562,18 +546,18 @@
         ];
 
         // ================== 外部リンクデータベース ==================
-        // これから先、ここに { no: 4, title: "〇〇", url: "..." } を追加するだけで、
-        // プログラムが全自動ですべてのボタンを「完璧に周回する光のグラデーション」にしてくれます！
+        // ここを編集すると、ボタンごとの色や文字色を変更できます！
+        // color: Tailwindの文字色クラス名 (例: orange-500, pink-500, white など)
+        // borderColor: 光のグラデーションの色コード (例: #ec4899)
         const externalLinks = [
-            { no: 1, title: "Na-Na-Ni", url: "https://minecraft-jp.github.io/Nanani-URL-Shortener/", icon: "", color: "orange-500", borderColor: "#ec4899" },
-           { no: 2, title: "素人", url: "https://minecraft-jp.github.io/Sirouto/", icon: "", color: "pink-500", borderColor: "#ec4899" }
+            {             { no: 1, title: "Na-Na-Ni", url: "https://minecraft-jp.github.io/Nanani-URL-Shortener/", icon: "", color: "orange-500", borderColor: "#ec4899" },
+           { no: 2, title: "素人", url: "https://minecraft-jp.github.io/Sirouto/", icon: "", color: "pink-500", borderColor: "#ec4899" } }
         ];
 
         window.onload = function() {
             lucide.createIcons();
         };
 
-        // --- フェイクローディング演出 ---
         const loaderMessages = [
             "サーバーとのセキュア接続を確立中",
             "データベースからユーザー情報を取得中",
@@ -609,7 +593,7 @@
             loadArea.classList.add('flex');
 
             startDots();
-            const steps = Math.floor(Math.random() * 3) + 3; // 少し短縮
+            const steps = Math.floor(Math.random() * 3) + 3; 
             let usedMsgs = [];
 
             for (let i = 0; i < steps; i++) {
@@ -644,7 +628,6 @@
             }
         }
 
-        // ================== UIテーマ変更機能 ==================
         function updateTheme(variable, value) {
             document.documentElement.style.setProperty(variable, value);
         }
@@ -670,7 +653,6 @@
             const container = document.getElementById("linksList");
             container.innerHTML = "";
 
-            // no順（昇順）にソートして並び替え
             const sortedLinks = [...externalLinks].sort((a, b) => a.no - b.no);
 
             sortedLinks.forEach((link) => {
@@ -678,31 +660,39 @@
                 linkEl.href = link.url;
                 linkEl.target = "_blank";
                 linkEl.title = `${link.title}へ移動`;
+                
+                linkEl.className = "orbit-btn-wrapper flex-shrink-0 active:scale-95 transition-all cursor-pointer";
 
-                let iconHtml = "";
-                // もしiconプロパティがあれば表示
-                if (link.icon && link.icon.trim() !== "") {
-                    iconHtml = `<i data-lucide="${link.icon}" class="w-3.5 h-3.5 text-white"></i>`;
+                // ▼ ここで個別の色指定を反映しています ▼
+                if (link.borderColor) {
+                    linkEl.style.setProperty('--btn-border-color', link.borderColor);
                 }
 
-                // 【自動適用】すべてのボタンに強制的に「周回する光」のCSS構造を付与します
-                linkEl.className = "orbit-btn-wrapper flex-shrink-0 active:scale-95 transition-all cursor-pointer";
+                // テキストカラーの構築（orange-500などが指定されていれば text-orange-500 にする）
+                let textColorClass = "text-white"; 
+                if (link.color) {
+                    textColorClass = link.color.startsWith('text-') ? link.color : `text-${link.color}`;
+                }
+
+                let iconHtml = "";
+                if (link.icon && link.icon.trim() !== "") {
+                    // アイコンにも同じ文字色クラスを適用
+                    iconHtml = `<i data-lucide="${link.icon}" class="w-3.5 h-3.5 ${textColorClass}"></i>`;
+                }
 
                 linkEl.innerHTML = `
                     <div class="orbit-btn-inner px-4 py-1.5 flex items-center gap-1.5">
                         ${iconHtml}
-                        <span class="tracking-widest text-white text-xs font-black select-none">${link.title}</span>
+                        <span class="tracking-widest ${textColorClass} text-xs font-black select-none">${link.title}</span>
                     </div>
                 `;
 
                 container.appendChild(linkEl);
             });
 
-            // Lucideアイコンを再レンダリング
             lucide.createIcons();
         }
 
-        // ================== 動画データベース ==================
         const videos = [
             {                 id: 1,
                 title: "ななにーフェラ(第一弾)",
@@ -790,19 +780,17 @@
             const vParam = parseInt(params.get('v'));
             if (vParam && videos.find(v => v.id === vParam)) { activeId = vParam; } else { activeId = 1; }
             
-            // 初回ロード時は自動再生設定に関わらずロードのみ行う（ブラウザの制限対策）
             const originalAutoPlay = appConfig.autoPlay;
             appConfig.autoPlay = false; 
             loadVideo(activeId);
             appConfig.autoPlay = originalAutoPlay;
             
             renderPlaylist();
-            renderExternalLinks(); // ログイン成功時に動的外部リンクをロード
+            renderExternalLinks(); 
             lucide.createIcons();
             setupPlayerEventListeners();
             updateVolumeBarUI(100);
             
-            // 設定をプレイヤーに反映
             player.playbackRate = appConfig.playbackRate;
             player.loop = appConfig.loop;
         }
@@ -828,7 +816,6 @@
             player.poster = v.thumbnail;
             player.load();
             
-            // 設定適用
             player.playbackRate = appConfig.playbackRate;
             player.loop = appConfig.loop;
             
@@ -844,14 +831,12 @@
                     playBtn.innerHTML = `<i data-lucide="pause" class="w-6 h-6 fill-current"></i>`;
                     lucide.createIcons();
                 }).catch((err) => {
-                    console.log("自動再生がブラウザにブロックされました:", err);
                     playBtn.innerHTML = `<i data-lucide="play" class="w-6 h-6 fill-current"></i>`;
                     lucide.createIcons();
                 });
             } else {
                 playBtn.innerHTML = `<i data-lucide="play" class="w-6 h-6 fill-current"></i>`;
                 lucide.createIcons();
-                // 読み込み完了したらスピナーを消す
                 player.addEventListener('canplay', () => videoSpinner.classList.add("hidden"), {once:true});
             }
         }
@@ -953,7 +938,6 @@
             }
         }
         
-        // ピクチャー・イン・ピクチャー
         async function togglePiP() {
             if (document.pictureInPictureElement) {
                 await document.exitPictureInPicture();
@@ -982,12 +966,11 @@
             player.ontimeupdate = () => { if(!dragging && !isNaN(player.duration)) { updateSeekBarUI((player.currentTime/player.duration)*100); currentTimeText.textContent = formatTime(player.currentTime); } };
             player.onloadedmetadata = () => { durationText.textContent = formatTime(player.duration); };
             
-            // 再生終了時の処理（連続再生）
             player.onended = () => {
                 if (!appConfig.loop && appConfig.autoNext) {
                     let currentIndex = videos.findIndex(v => v.id === activeId);
-                    let nextIndex = (currentIndex + 1) % videos.length; // 最後なら最初に戻る
-                    showToast("次の動画を再生します...");
+                    let nextIndex = (currentIndex + 1) % videos.length; 
+                    showToast("⏭️ 次の動画を再生します...");
                     setTimeout(() => {
                         loadVideo(videos[nextIndex].id);
                     }, 1500);
@@ -1019,3 +1002,5 @@
     </script>
 </body>
 </html>
+
+
