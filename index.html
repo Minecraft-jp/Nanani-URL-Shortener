@@ -16,7 +16,6 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-        // カスタムテーマ設定（CSS変数と連携）
         tailwind.config = {
             theme: {
                 extend: {
@@ -38,7 +37,6 @@
         }
     </script>
     <style>
-        /* CSS変数によるテーマ管理基盤 */
         :root {
             --bg-main: #000000;
             --bg-surface: #0a0a0a;
@@ -61,10 +59,8 @@
             font-family: var(--font-family);
         }
         
-        /* カスタムシャドウ */
         .theme-shadow { box-shadow: 0 10px 40px -10px var(--shadow-color); opacity: 0.8; }
         
-        /* ログイン画面用フローティングラベル */
         .floating-input { transition: border-color 0.3s ease; }
         .floating-label { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .floating-input:focus ~ .floating-label,
@@ -74,7 +70,6 @@
             color: var(--accent);
         }
         
-        /* シークバー設定 */
         #seekBar { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; height: 24px; display: flex; align-items: center; }
         #seekBar:focus { outline: none; }
         #seekBar::-webkit-slider-runnable-track {
@@ -90,7 +85,6 @@
         #seekBar:hover::-webkit-slider-thumb { transform: scale(1.2); }
         #seekBar:active::-webkit-slider-thumb { transform: scale(1.4); background-color: var(--accent-hover); }
 
-        /* 音量バー設定 */
         #volumeBar { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; height: 24px; display: flex; align-items: center; }
         #volumeBar:focus { outline: none; }
         #volumeBar::-webkit-slider-runnable-track {
@@ -107,12 +101,10 @@
 
         details summary::-webkit-details-marker { display: none; }
 
-        /* フルスクリーン補正 */
         #videoContainer:fullscreen, #videoContainer:-webkit-full-screen {
             width: 100vw !important; height: 100vh !important; border-radius: 0px !important; background-color: #000000 !important;
         }
 
-        /* ハッシュタグ一括グラデーション＆流れるアニメーション */
         @keyframes hashtagFlow { 
             0% { background-position: 0% 50%; } 
             100% { background-position: 200% 50%; } 
@@ -125,7 +117,6 @@
             animation: hashtagFlow 3.5s linear infinite; display: inline-block; font-weight: 700;
         }
 
-        /* ================== 【自動適用】完璧に円周を周回するレーザーボーダー ================== */
         @keyframes spinAround {
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
@@ -147,7 +138,6 @@
             left: 50%;
             width: 300%;
             padding-bottom: 300%;
-            /* ↓変更点：個別に設定された変数(btn-border-color)があればそれを優先し、なければデフォルトの色を使う */
             background: conic-gradient(
                 transparent 0%,
                 transparent 50%,
@@ -172,23 +162,11 @@
             height: 100%;
         }
 
-        /* トグルスイッチ用（プレイヤー設定） */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: var(--accent);
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: var(--accent);
-        }
+        .toggle-checkbox:checked { right: 0; border-color: var(--accent); }
+        .toggle-checkbox:checked + .toggle-label { background-color: var(--accent); }
 
-        /* 横スライド時にスクロールバーを非表示にする */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-brandAccent selection:text-white transition-colors duration-500">
@@ -220,9 +198,9 @@
 
             <div id="loadingArea" class="hidden flex-col items-center justify-center mt-6 pt-4">
                 <div class="animate-spin rounded-full h-8 w-8 border-4 border-brandAccent border-t-transparent mb-4"></div>
-                <div class="flex items-center text-brandAccent text-xs font-bold tracking-wide font-mono h-6">
+                <div class="flex items-center justify-center text-brandAccent text-xs font-bold tracking-wide font-mono h-6 text-center w-full">
                     <span id="loadingMsg">サーバー状況を確認しています</span>
-                    <span id="loadingDots" class="w-4 text-left"></span>
+                    <span id="loadingDots" class="w-4 text-left inline-block"></span>
                 </div>
             </div>
 
@@ -244,11 +222,8 @@
                 </button>
             </div>
 
-            <!-- 自動生成される外部リンクスライドエリア -->
             <div class="flex-1 min-w-0 overflow-x-auto no-scrollbar py-1" id="externalLinksContainer">
-                <div class="flex items-center gap-2.5" id="linksList">
-                    <!-- JavaScriptから全自動で追加されます -->
-                </div>
+                <div class="flex items-center gap-2.5" id="linksList"></div>
             </div>
             
             <div class="flex items-center gap-3 flex-shrink-0">
@@ -256,8 +231,25 @@
                     <p class="text-[10px] text-brandMuted">Welcome,</p>
                     <p id="headerUsername" class="text-xs font-bold text-brandAccent tracking-wide">User</p>
                 </div>
-                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-brandSurface border border-brandBorder flex items-center justify-center text-brandMuted shadow-inner overflow-hidden">
-                    <i data-lucide="user" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+
+                <!-- ユーザーメニュー (ドロップダウン) -->
+                <div class="relative">
+                    <div id="userMenuBtn" onclick="toggleUserMenu(event)" class="cursor-pointer w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-brandSurface border border-brandBorder flex items-center justify-center text-brandMuted shadow-inner overflow-hidden hover:border-brandAccent transition-colors">
+                        <i data-lucide="user" class="w-5 h-5 sm:w-6 sm:h-6 pointer-events-none"></i>
+                    </div>
+                    
+                    <div id="userMenuDropdown" class="hidden absolute right-0 top-full mt-3 w-48 bg-brandSurface border border-brandBorder rounded-xl shadow-2xl py-2 z-50 origin-top-right">
+                        <a href="javascript:void(0)" onclick="closeUserMenu(); showToast('マイページ機能は現在準備中です');" class="block px-4 py-2 text-xs font-bold text-brandText hover:bg-brandBg transition-colors flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-4 h-4 text-brandMuted"></i> マイページ</a>
+                        <a href="javascript:void(0)" onclick="closeUserMenu(); openHistoryModal();" class="block px-4 py-2 text-xs font-bold text-brandText hover:bg-brandBg transition-colors flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-brandMuted"></i> 視聴履歴</a>
+                        <a href="javascript:void(0)" onclick="closeUserMenu(); openWatchLaterModal();" class="block px-4 py-2 text-xs font-bold text-brandText hover:bg-brandBg transition-colors flex items-center gap-2"><i data-lucide="bookmark" class="w-4 h-4 text-brandMuted"></i> あとで見る</a>
+                        <a href="javascript:void(0)" onclick="closeUserMenu(); showToast('サポート窓口へお問合せください');" class="block px-4 py-2 text-xs font-bold text-brandText hover:bg-brandBg transition-colors flex items-center gap-2"><i data-lucide="headphones" class="w-4 h-4 text-brandMuted"></i> サポート</a>
+                        
+                        <!-- 半透明の横線 -->
+                        <hr class="border-brandBorder my-2 opacity-50">
+                        
+                        <!-- 確実なログアウト（loginへ移動） -->
+                        <button onclick="logout()" class="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-950/30 transition-colors flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> ログアウト</button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -311,11 +303,15 @@
                             <h1 id="videoTitle" class="text-xl lg:text-2xl font-black tracking-tight leading-tight text-brandText">読み込み中...</h1>
                             <p class="text-xs text-brandMuted" id="videoDate">公開日: ----/--/--</p>
                         </div>
-                        <div class="flex items-center gap-3 flex-shrink-0">
-                            <button onclick="shareVideo()" class="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-brandBg border border-brandBorder hover:border-brandAccent active:scale-95 transition-all rounded-full text-xs font-bold text-brandText shadow-md">
+                        <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                            <!-- あとで見るボタン（保存時: 塗りつぶし / 未保存時: 枠線のみ） -->
+                            <button id="watchLaterBtn" onclick="toggleWatchLater()" title="あとで見る" class="p-3 bg-brandBg border border-brandBorder hover:border-amber-400 active:scale-95 transition-all rounded-full text-brandText shadow-md flex items-center justify-center">
+                                <i data-lucide="bookmark" id="watchLaterIcon" class="w-5 h-5 text-amber-400 fill-transparent"></i>
+                            </button>
+                            <button onclick="shareVideo()" class="flex items-center gap-1.5 px-4 py-2.5 bg-brandBg border border-brandBorder hover:border-brandAccent active:scale-95 transition-all rounded-full text-xs font-bold text-brandText shadow-md">
                                 <i data-lucide="share-2" class="w-4 h-4 text-blue-400"></i><span>共有する</span>
                             </button>
-                            <button id="downloadBtn" onclick="downloadVideo()" class="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-brandBg border border-brandBorder hover:border-brandAccent active:scale-95 transition-all rounded-full text-xs font-bold text-brandText shadow-md">
+                            <button id="downloadBtn" onclick="downloadVideo()" class="flex items-center gap-1.5 px-4 py-2.5 bg-brandBg border border-brandBorder hover:border-brandAccent active:scale-95 transition-all rounded-full text-xs font-bold text-brandText shadow-md">
                                 <i data-lucide="download" class="w-4 h-4 text-green-400"></i><span id="downloadBtnText">ダウンロード</span>
                             </button>
                         </div>
@@ -342,7 +338,7 @@
         </footer>
     </div>
 
-    <!-- ================= UIカスタマイズ＆機能設定モーダル ================= -->
+    <!-- UIカスタマイズ＆機能設定モーダル -->
     <div id="settingsModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
         <div class="bg-brandSurface border border-brandBorder rounded-theme w-full max-w-lg p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-300 scrollbar-thin" id="settingsModalContent">
             
@@ -354,13 +350,11 @@
                 <i data-lucide="sliders" class="w-5 h-5"></i> SETTINGS
             </h2>
             
-            <!-- プレイヤー動作設定セクション -->
             <h3 class="text-sm font-bold text-brandText mb-4 flex items-center gap-2 bg-brandBg py-2 px-3 rounded-lg border border-brandBorder">
                 <i data-lucide="play-square" class="w-4 h-4 text-brandAccent"></i> 動作設定 (Player)
             </h3>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                <!-- 再生速度 -->
                 <label class="block">
                     <span class="text-xs text-brandMuted block mb-1 font-bold">13. 再生速度</span>
                     <select id="config-playbackRate" class="w-full h-10 px-3 rounded bg-brandBg text-brandText border border-brandBorder outline-none font-bold text-sm" onchange="updateAppConfig('playbackRate', parseFloat(this.value))">
@@ -372,7 +366,6 @@
                     </select>
                 </label>
 
-                <!-- 選択時の自動再生 -->
                 <div class="flex items-center justify-between p-3 border border-brandBorder rounded bg-brandBg h-10 mt-0 sm:mt-5">
                     <span class="text-xs font-bold text-brandText">14. 自動再生 (選択時)</span>
                     <label class="flex items-center cursor-pointer">
@@ -384,7 +377,6 @@
                     </label>
                 </div>
 
-                <!-- 次の動画へ自動遷移 -->
                 <div class="flex items-center justify-between p-3 border border-brandBorder rounded bg-brandBg h-10">
                     <span class="text-xs font-bold text-brandText">15. 連続再生 (終了後)</span>
                     <label class="flex items-center cursor-pointer">
@@ -396,7 +388,6 @@
                     </label>
                 </div>
 
-                <!-- ループ再生 -->
                 <div class="flex items-center justify-between p-3 border border-brandBorder rounded bg-brandBg h-10">
                     <span class="text-xs font-bold text-brandText">16. 動画ループ</span>
                     <label class="flex items-center cursor-pointer">
@@ -409,55 +400,39 @@
                 </div>
             </div>
 
-            <!-- UIテーマ設定セクション -->
-            <h3 class="text-sm font-bold text-brandText mb-4 flex items-center gap-2 bg-brandBg py-2 px-3 rounded-lg border border-brandBorder">
-                <i data-lucide="palette" class="w-4 h-4 text-brandAccent"></i> テーマ設定 (Theme)
-            </h3>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label class="block"><span class="text-xs text-brandMuted block mb-1 font-bold">1. 背景色 (Background)</span>
-                    <input type="color" value="#000000" class="w-full h-10 rounded cursor-pointer bg-brandBg border border-brandBorder" onchange="updateTheme('--bg-main', this.value)"></label>
-                <label class="block"><span class="text-xs text-brandMuted block mb-1 font-bold">2. パネル背景 (Surface)</span>
-                    <input type="color" value="#0a0a0a" class="w-full h-10 rounded cursor-pointer bg-brandBg border border-brandBorder" onchange="updateTheme('--bg-surface', this.value)"></label>
-                <label class="block"><span class="text-xs text-brandMuted block mb-1 font-bold">3. ヘッダー背景 (Header)</span>
-                    <input type="color" value="#000000" class="w-full h-10 rounded cursor-pointer bg-brandBg border border-brandBorder" onchange="updateTheme('--header-bg', this.value)"></label>
-                <label class="block"><span class="text-xs text-brandMuted block mb-1 font-bold">4. 枠線 (Border)</span>
-                    <input type="color" value="#262626" class="w-full h-10 rounded cursor-pointer bg-brandBg border border-brandBorder" onchange="updateTheme('--border-color', this.value)"></label>
-                
-                <label class="block"><span class="text-xs text-brandMuted block mb-1 font-bold">5. アクセント (Primary)</span>
-                    <input type="color" value="#ea580c" class="w-full h-10 rounded cursor-pointer bg-brandBg border border-brandBorder" onchange="updateTheme('--accent', this.value); updateTheme('--shadow-color', this.value);"></label>
-                <label class="block"><span class="text-xs text-brandMuted block mb-1 font-bold">6. ホバー色 (Hover)</span>
-                    <input type="color" value="#c2410c" class="w-full h-10 rounded cursor-pointer bg-brandBg border border-brandBorder" onchange="updateTheme('--accent-hover', this.value)"></label>
-                
-                <label class="block"><span class="text-xs text-brandMuted block mb-1 font-bold">7. メインテキスト (Text)</span>
-                    <input type="color" value="#ffffff" class="w-full h-10 rounded cursor-pointer bg-brandBg border border-brandBorder" onchange="updateTheme('--text-main', this.value)"></label>
-                <label class="block"><span class="text-xs text-brandMuted block mb-1 font-bold">8. サブテキスト (Muted)</span>
-                    <input type="color" value="#737373" class="w-full h-10 rounded cursor-pointer bg-brandBg border border-brandBorder" onchange="updateTheme('--text-muted', this.value)"></label>
-
-                <label class="block"><span class="text-xs text-brandMuted block mb-1 font-bold">9. ハッシュタグ グラデ開始色</span>
-                    <input type="color" value="#ef4444" class="w-full h-10 rounded cursor-pointer bg-brandBg border border-brandBorder" onchange="updateTheme('--grad-start', this.value);"></label>
-                <label class="block"><span class="text-xs text-brandMuted block mb-1 font-bold">10. ハッシュタグ グラデ終了色</span>
-                    <input type="color" value="#440c0e" class="w-full h-10 rounded cursor-pointer bg-brandBg border border-brandBorder" onchange="updateTheme('--grad-end', this.value);"></label>
-
-                <label class="block sm:col-span-2"><span class="text-xs text-brandMuted block mb-1 font-bold">11. フォントスタイル</span>
-                    <select class="w-full h-10 px-3 rounded bg-brandBg text-brandText border border-brandBorder outline-none font-bold text-sm" onchange="updateTheme('--font-family', this.value)">
-                        <option value="ui-sans-serif, system-ui, sans-serif">モダン・ゴシック (Modern Sans)</option>
-                        <option value="ui-serif, Georgia, serif">明朝体 (Elegant Serif)</option>
-                        <option value="ui-monospace, SFMono-Regular, monospace">等幅フォント (Monospace)</option>
-                    </select>
-                </label>
-                <label class="block sm:col-span-2"><span class="text-xs text-brandMuted block mb-2 font-bold flex justify-between"><span>12. 角丸サイズ (Radius)</span></span>
-                    <input type="range" min="0" max="3" step="0.1" value="1.5" class="w-full accent-brandAccent" oninput="updateTheme('--border-radius-base', this.value + 'rem')">
-                </label>
-            </div>
-            
             <div class="mt-6 pt-4 border-t border-brandBorder flex justify-end gap-3 sticky bottom-0 bg-brandSurface pb-1">
-                <button onclick="location.reload()" class="px-5 py-2.5 bg-brandBg border border-brandBorder hover:bg-brandBorder text-brandText rounded-full transition text-xs font-bold shadow-md">
-                    初期状態にリセット
-                </button>
                 <button onclick="closeSettings()" class="px-6 py-2.5 bg-brandAccent hover:bg-brandAccentHover text-white rounded-full transition text-sm font-bold shadow-lg shadow-brandAccent/30">
                     閉じる
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 視聴履歴モーダル -->
+    <div id="historyModal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden">
+        <div class="bg-brandSurface border border-brandBorder rounded-theme max-w-md w-full max-h-[85vh] flex flex-col p-6 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-brandBorder flex-shrink-0">
+                <h3 class="text-lg font-bold text-brandText flex items-center gap-2"><i data-lucide="history" class="text-brandAccent"></i><span>視聴履歴</span></h3>
+                <button onclick="closeHistoryModal()" class="text-brandMuted hover:text-brandText transition-colors p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div id="historyListContainer" class="overflow-y-auto flex-grow py-4 space-y-3 scrollbar-thin"></div>
+            <div class="pt-3 border-t border-brandBorder flex gap-2 flex-shrink-0">
+                <button onclick="clearHistory()" class="w-1/2 py-2.5 bg-red-950/40 border border-red-900/60 hover:bg-red-900/60 text-red-400 rounded-xl text-xs font-bold transition-all">履歴を消去</button>
+                <button onclick="closeHistoryModal()" class="w-1/2 py-2.5 bg-brandBg border border-brandBorder hover:border-brandAccent text-brandText rounded-xl text-xs font-bold transition-all">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- あとで見るモーダル -->
+    <div id="watchLaterModal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden">
+        <div class="bg-brandSurface border border-brandBorder rounded-theme max-w-md w-full max-h-[85vh] flex flex-col p-6 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-brandBorder flex-shrink-0">
+                <h3 class="text-lg font-bold text-brandText flex items-center gap-2"><i data-lucide="bookmark" class="text-amber-400"></i><span>あとで見る</span></h3>
+                <button onclick="closeWatchLaterModal()" class="text-brandMuted hover:text-brandText transition-colors p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div id="watchLaterListContainer" class="overflow-y-auto flex-grow py-4 space-y-3 scrollbar-thin"></div>
+            <div class="pt-3 border-t border-brandBorder flex-shrink-0">
+                <button onclick="closeWatchLaterModal()" class="w-full py-2.5 bg-brandBg border border-brandBorder hover:border-brandAccent text-brandText rounded-xl text-xs font-bold transition-all">閉じる</button>
             </div>
         </div>
     </div>
@@ -538,7 +513,7 @@
             }
         }
 
-        const userDB = [
+        const dummyLocalDB = [
             { username: "櫻井結太", password: "7k#B9vP2@mR5zLwQ" },
             { username: "髙橋浬", password: "HK~kEf|zFji,MU8U/4$$a2R8Ruu$!7" },
             { username: "ピンゴリ", password: "Pingoli" },
@@ -546,17 +521,35 @@
             { username: "れおん", password: "Daigo" }
         ];
 
-        // ================== 外部リンクデータベース ==================
-        // ここを編集すると、ボタンごとの色や文字色を変更できます！
-        // color: Tailwindの文字色クラス名 (例: orange-500, pink-500, white など)
-        // borderColor: 光のグラデーションの色コード (例: #ec4899)
         const externalLinks = [
             { no: 1, title: "Na-Na-Ni", url: "https://minecraft-jp.github.io/Nanani-URL-Shortener/", icon: "", color: "white", borderColor: "#ec4899" },
             { no: 2, title: "素人", url: "https://minecraft-jp.github.io/Sirouto/", icon: "user", color: "white", borderColor: "#ec4899" }
         ];
 
+        function getStoredData(key, defaultVal) {
+            try {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : defaultVal;
+            } catch (e) {
+                return defaultVal;
+            }
+        }
+        function setStoredData(key, val) {
+            try {
+                localStorage.setItem(key, JSON.stringify(val));
+            } catch (e) {}
+        }
+
+        let userWatchHistory = getStoredData('cinemastream_history', []);
+        let userWatchLater = getStoredData('cinemastream_watchlater', []);
+
+        // 起動時の自動ログイン状態の復元
         window.onload = function() {
             lucide.createIcons();
+            const savedUser = getStoredData('cinemastream_session_user', null);
+            if (savedUser) {
+                applyLoginState(savedUser);
+            }
         };
 
         const loaderMessages = [
@@ -564,9 +557,7 @@
             "データベースからユーザー情報を取得中",
             "資格情報とハッシュキーを照合中",
             "アクセス権限を検証しています",
-            "暗号化されたセッションを初期化中",
-            "UIコンポーネントを準備しています",
-            "動画ストリーミングの準備中"
+            "暗号化されたセッションを初期化中"
         ];
         let dotInterval;
 
@@ -574,7 +565,7 @@
             let count = 0;
             const dotsEl = document.getElementById('loadingDots');
             dotInterval = setInterval(() => {
-                count = (count + 1) % 4;
+                count = (count % 3) + 1;
                 dotsEl.textContent = ".".repeat(count);
             }, 100);
         }
@@ -594,31 +585,31 @@
             loadArea.classList.add('flex');
 
             startDots();
-            const steps = Math.floor(Math.random() * 3) + 3; 
-            let usedMsgs = [];
-
+            
+            const steps = 3; 
             for (let i = 0; i < steps; i++) {
-                let available = loaderMessages.filter(m => !usedMsgs.includes(m));
-                if (available.length === 0) available = loaderMessages;
-                const pickedMsg = available[Math.floor(Math.random() * available.length)];
-                usedMsgs.push(pickedMsg);
-                
-                loadMsg.textContent = pickedMsg;
-                const delay = Math.floor(Math.random() * 600) + 400;
-                await new Promise(r => setTimeout(r, delay));
+                loadMsg.textContent = loaderMessages[Math.floor(Math.random() * loaderMessages.length)];
+                await new Promise(r => setTimeout(r, 500));
+            }
+
+            let targetDB = dummyLocalDB;
+            try {
+                const remoteRes = await fetch("https://github.com/Minecraft-jp/------/raw/refs/heads/main/-", { mode: 'cors' });
+                if (remoteRes.ok) {
+                    const remoteData = await remoteRes.json();
+                    if (Array.isArray(remoteData)) targetDB = remoteData;
+                }
+            } catch (e) {
+                targetDB = dummyLocalDB;
             }
 
             clearInterval(dotInterval);
-            const foundUser = userDB.find(u => u.username === userInp.value && u.password === passInp.value);
+
+            const foundUser = targetDB.find(u => u.username === userInp.value && u.password === passInp.value);
 
             if (foundUser) {
-                document.getElementById('headerUsername').textContent = foundUser.username;
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('loginScreen').classList.remove('flex');
-                const mainContent = document.getElementById('mainContent');
-                mainContent.classList.remove('hidden');
-                mainContent.classList.add('flex');
-                initPlayer();
+                setStoredData('cinemastream_session_user', foundUser.username);
+                applyLoginState(foundUser.username);
             } else {
                 userInp.value = ""; passInp.value = "";
                 loadArea.classList.add('hidden');
@@ -627,6 +618,179 @@
                 errBox.classList.remove('hidden'); errBox.classList.add('flex');
                 lucide.createIcons();
             }
+        }
+
+        function applyLoginState(username) {
+            document.getElementById('headerUsername').textContent = username;
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('flex');
+            const mainContent = document.getElementById('mainContent');
+            mainContent.classList.remove('hidden');
+            mainContent.classList.add('flex');
+            initPlayer();
+        }
+
+        // ユーザーアイコン・ドロップダウンメニューの制御
+        function toggleUserMenu(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById('userMenuDropdown');
+            menu.classList.toggle('hidden');
+        }
+
+        function closeUserMenu() {
+            const menu = document.getElementById('userMenuDropdown');
+            if (menu) menu.classList.add('hidden');
+        }
+
+        // ログアウト処理（セッションを削除して強制的にログイン画面へ）
+        function logout() {
+            try {
+                localStorage.removeItem('cinemastream_session_user');
+            } catch (e) {}
+            // ログイン画面を表示状態に戻す
+            document.getElementById('mainContent').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('flex');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('loginScreen').classList.add('flex');
+            document.getElementById('userId').value = "";
+            document.getElementById('userPwd').value = "";
+            closeUserMenu();
+            showToast("🔒 ログアウトしました");
+        }
+
+        // 画面外クリックでメニューを閉じる
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('userMenuDropdown');
+            const btn = document.getElementById('userMenuBtn');
+            if (menu && !menu.classList.contains('hidden')) {
+                if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            }
+        });
+
+        // 視聴履歴の記録
+        function recordHistory(videoId) {
+            const now = new Date();
+            const timeString = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+            userWatchHistory = userWatchHistory.filter(item => item.id !== videoId);
+            userWatchHistory.unshift({ id: videoId, watchedAt: timeString });
+            if (userWatchHistory.length > 30) userWatchHistory.pop();
+            setStoredData('cinemastream_history', userWatchHistory);
+        }
+
+        function openHistoryModal() {
+            const container = document.getElementById('historyListContainer');
+            container.innerHTML = "";
+            if (userWatchHistory.length === 0) {
+                container.innerHTML = `<p class="text-xs text-brandMuted text-center py-8">視聴履歴はありません</p>`;
+            } else {
+                userWatchHistory.forEach(item => {
+                    const v = videos.find(video => video.id === item.id);
+                    if (!v) return;
+                    const el = document.createElement('div');
+                    el.className = "flex items-center justify-between p-2.5 bg-brandBg rounded-xl border border-brandBorder cursor-pointer hover:border-brandAccent transition-all";
+                    el.onclick = () => {
+                        loadVideo(v.id);
+                        closeHistoryModal();
+                    };
+                    el.innerHTML = `
+                        <div class="flex items-center gap-3 min-w-0">
+                            <img src="${v.thumbnail}" class="w-16 h-10 object-contain bg-black rounded border border-brandBorder flex-shrink-0">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-brandText truncate">${v.title}</p>
+                                <p class="text-[10px] text-brandMuted">${item.watchedAt}</p>
+                            </div>
+                        </div>
+                        <i data-lucide="play-circle" class="w-5 h-5 text-brandAccent flex-shrink-0 ml-2"></i>
+                    `;
+                    container.appendChild(el);
+                });
+            }
+            document.getElementById('historyModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        function clearHistory() {
+            userWatchHistory = [];
+            setStoredData('cinemastream_history', []);
+            openHistoryModal();
+            showToast("🧹 視聴履歴を消去しました");
+        }
+
+        // あとで見る（ブックマーク）切替
+        function toggleWatchLater() {
+            const index = userWatchLater.indexOf(activeId);
+            if (index >= 0) {
+                userWatchLater.splice(index, 1);
+                showToast("❌ 「あとで見る」から削除しました");
+            } else {
+                userWatchLater.push(activeId);
+                showToast("📌 「あとで見る」に追加しました");
+            }
+            setStoredData('cinemastream_watchlater', userWatchLater);
+            updateWatchLaterBtnUI();
+        }
+
+        function updateWatchLaterBtnUI() {
+            const isAdded = userWatchLater.includes(activeId);
+            const btn = document.getElementById('watchLaterBtn');
+            if (isAdded) {
+                btn.innerHTML = `<i data-lucide="bookmark" class="w-5 h-5 text-amber-400 fill-amber-400"></i>`;
+            } else {
+                btn.innerHTML = `<i data-lucide="bookmark" class="w-5 h-5 text-amber-400 fill-transparent"></i>`;
+            }
+            lucide.createIcons();
+        }
+
+        function openWatchLaterModal() {
+            const container = document.getElementById('watchLaterListContainer');
+            container.innerHTML = "";
+            if (userWatchLater.length === 0) {
+                container.innerHTML = `<p class="text-xs text-brandMuted text-center py-8">「あとで見る」リストは空です</p>`;
+            } else {
+                userWatchLater.forEach(id => {
+                    const v = videos.find(video => video.id === id);
+                    if (!v) return;
+                    const el = document.createElement('div');
+                    el.className = "flex items-center justify-between p-2.5 bg-brandBg rounded-xl border border-brandBorder";
+                    el.innerHTML = `
+                        <div class="flex items-center gap-3 min-w-0 cursor-pointer flex-grow" onclick="loadVideo(${v.id}); closeWatchLaterModal();">
+                            <img src="${v.thumbnail}" class="w-16 h-10 object-contain bg-black rounded border border-brandBorder flex-shrink-0">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-brandText truncate">${v.title}</p>
+                                <p class="text-[10px] text-brandMuted">${v.duration}</p>
+                            </div>
+                        </div>
+                        <button onclick="removeFromWatchLater(${v.id}, event)" class="p-2 text-brandMuted hover:text-red-500 transition-colors" title="削除">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    container.appendChild(el);
+                });
+            }
+            document.getElementById('watchLaterModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function removeFromWatchLater(id, e) {
+            if (e) e.stopPropagation();
+            const index = userWatchLater.indexOf(id);
+            if (index >= 0) {
+                userWatchLater.splice(index, 1);
+                setStoredData('cinemastream_watchlater', userWatchLater);
+                openWatchLaterModal();
+                updateWatchLaterBtnUI();
+                showToast("🗑️ リストから削除しました");
+            }
+        }
+
+        function closeWatchLaterModal() {
+            document.getElementById('watchLaterModal').classList.add('hidden');
         }
 
         function updateTheme(variable, value) {
@@ -649,11 +813,9 @@
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
-        // ================== 外部リンク【全自動】レンダリング機能 ==================
         function renderExternalLinks() {
             const container = document.getElementById("linksList");
             container.innerHTML = "";
-
             const sortedLinks = [...externalLinks].sort((a, b) => a.no - b.no);
 
             sortedLinks.forEach((link) => {
@@ -661,15 +823,12 @@
                 linkEl.href = link.url;
                 linkEl.target = "_blank";
                 linkEl.title = `${link.title}へ移動`;
-                
                 linkEl.className = "orbit-btn-wrapper flex-shrink-0 active:scale-95 transition-all cursor-pointer";
 
-                // ▼ ここで個別の色指定を反映しています ▼
                 if (link.borderColor) {
                     linkEl.style.setProperty('--btn-border-color', link.borderColor);
                 }
 
-                // テキストカラーの構築（orange-500などが指定されていれば text-orange-500 にする）
                 let textColorClass = "text-white"; 
                 if (link.color) {
                     textColorClass = link.color.startsWith('text-') ? link.color : `text-${link.color}`;
@@ -677,7 +836,6 @@
 
                 let iconHtml = "";
                 if (link.icon && link.icon.trim() !== "") {
-                    // アイコンにも同じ文字色クラスを適用
                     iconHtml = `<i data-lucide="${link.icon}" class="w-3.5 h-3.5 ${textColorClass}"></i>`;
                 }
 
@@ -687,10 +845,8 @@
                         <span class="tracking-widest ${textColorClass} text-xs font-black select-none">${link.title}</span>
                     </div>
                 `;
-
                 container.appendChild(linkEl);
             });
-
             lucide.createIcons();
         }
 
@@ -771,6 +927,8 @@
             renderPlaylist();
             videoSpinner.classList.remove("hidden");
             updateSeekBarUI(0);
+            updateWatchLaterBtnUI();
+            recordHistory(v.id);
             
             if (appConfig.autoPlay) {
                 player.play().then(() => {
