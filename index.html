@@ -247,7 +247,7 @@
                         <!-- 半透明の横線 -->
                         <hr class="border-brandBorder my-2 opacity-50">
                         
-                        <!-- 確実なログアウト（loginへ移動） -->
+                        <!-- ログアウト -->
                         <button onclick="logout()" class="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-950/30 transition-colors flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> ログアウト</button>
                     </div>
                 </div>
@@ -304,7 +304,7 @@
                             <p class="text-xs text-brandMuted" id="videoDate">公開日: ----/--/--</p>
                         </div>
                         <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                            <!-- あとで見るボタン（保存時: 塗りつぶし / 未保存時: 枠線のみ） -->
+                            <!-- あとで見るボタン -->
                             <button id="watchLaterBtn" onclick="toggleWatchLater()" title="あとで見る" class="p-3 bg-brandBg border border-brandBorder hover:border-amber-400 active:scale-95 transition-all rounded-full text-brandText shadow-md flex items-center justify-center">
                                 <i data-lucide="bookmark" id="watchLaterIcon" class="w-5 h-5 text-amber-400 fill-transparent"></i>
                             </button>
@@ -543,7 +543,6 @@
         let userWatchHistory = getStoredData('cinemastream_history', []);
         let userWatchLater = getStoredData('cinemastream_watchlater', []);
 
-        // 起動時の自動ログイン状態の復元
         window.onload = function() {
             lucide.createIcons();
             const savedUser = getStoredData('cinemastream_session_user', null);
@@ -589,7 +588,7 @@
             const steps = 3; 
             for (let i = 0; i < steps; i++) {
                 loadMsg.textContent = loaderMessages[Math.floor(Math.random() * loaderMessages.length)];
-                await new Promise(r => setTimeout(r, 500));
+                await new Promise(r => setTimeout(r, 400));
             }
 
             let targetDB = dummyLocalDB;
@@ -630,7 +629,6 @@
             initPlayer();
         }
 
-        // ユーザーアイコン・ドロップダウンメニューの制御
         function toggleUserMenu(e) {
             if (e) e.stopPropagation();
             const menu = document.getElementById('userMenuDropdown');
@@ -642,23 +640,34 @@
             if (menu) menu.classList.add('hidden');
         }
 
-        // ログアウト処理（セッションを削除して強制的にログイン画面へ）
+        // ログアウト：セッションを消去してログイン画面へ即座に切り替え
         function logout() {
             try {
                 localStorage.removeItem('cinemastream_session_user');
             } catch (e) {}
-            // ログイン画面を表示状態に戻す
+
+            closeUserMenu();
+            // 動画を停止
+            if (player) {
+                player.pause();
+                player.src = "";
+            }
+            // メイン画面を非表示にし、ログイン画面を表示
             document.getElementById('mainContent').classList.add('hidden');
             document.getElementById('mainContent').classList.remove('flex');
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('loginScreen').classList.add('flex');
+            
+            // フォームをクリアしてローディングを隠す
             document.getElementById('userId').value = "";
             document.getElementById('userPwd').value = "";
-            closeUserMenu();
+            document.getElementById('loadingArea').classList.add('hidden');
+            document.getElementById('loginBtnContainer').classList.remove('hidden');
+            document.getElementById('loginError').classList.add('hidden');
+            
             showToast("🔒 ログアウトしました");
         }
 
-        // 画面外クリックでメニューを閉じる
         document.addEventListener('click', (e) => {
             const menu = document.getElementById('userMenuDropdown');
             const btn = document.getElementById('userMenuBtn');
@@ -669,7 +678,6 @@
             }
         });
 
-        // 視聴履歴の記録
         function recordHistory(videoId) {
             const now = new Date();
             const timeString = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
@@ -722,7 +730,6 @@
             showToast("🧹 視聴履歴を消去しました");
         }
 
-        // あとで見る（ブックマーク）切替
         function toggleWatchLater() {
             const index = userWatchLater.indexOf(activeId);
             if (index >= 0) {
