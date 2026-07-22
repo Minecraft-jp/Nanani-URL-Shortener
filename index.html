@@ -247,7 +247,7 @@
                         <!-- 半透明の横線 -->
                         <hr class="border-brandBorder my-2 opacity-50">
                         
-                        <!-- ログアウト -->
+                        <!-- 確実なログアウト（loginへ移動） -->
                         <button onclick="logout()" class="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-950/30 transition-colors flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> ログアウト</button>
                     </div>
                 </div>
@@ -304,7 +304,7 @@
                             <p class="text-xs text-brandMuted" id="videoDate">公開日: ----/--/--</p>
                         </div>
                         <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                            <!-- あとで見るボタン -->
+                            <!-- あとで見るボタン（保存時: 塗りつぶし / 未保存時: 枠線のみ） -->
                             <button id="watchLaterBtn" onclick="toggleWatchLater()" title="あとで見る" class="p-3 bg-brandBg border border-brandBorder hover:border-amber-400 active:scale-95 transition-all rounded-full text-brandText shadow-md flex items-center justify-center">
                                 <i data-lucide="bookmark" id="watchLaterIcon" class="w-5 h-5 text-amber-400 fill-transparent"></i>
                             </button>
@@ -540,9 +540,14 @@
             } catch (e) {}
         }
 
-        let userWatchHistory = getStoredData('cinemastream_history', []);
-        let userWatchLater = getStoredData('cinemastream_watchlater', []);
+        // ============================================
+        // ユーザー個別管理の追加
+        // ============================================
+        let currentUser = null;
+        let userWatchHistory = [];
+        let userWatchLater = [];
 
+        // 起動時の自動ログイン状態の復元
         window.onload = function() {
             lucide.createIcons();
             const savedUser = getStoredData('cinemastream_session_user', null);
@@ -620,6 +625,12 @@
         }
 
         function applyLoginState(username) {
+            currentUser = username;
+            
+            // ユーザー名ごとに個別のキーでデータをロード
+            userWatchHistory = getStoredData('cinemastream_history_' + currentUser, []);
+            userWatchLater = getStoredData('cinemastream_watchlater_' + currentUser, []);
+
             document.getElementById('headerUsername').textContent = username;
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('flex');
@@ -646,19 +657,21 @@
                 localStorage.removeItem('cinemastream_session_user');
             } catch (e) {}
 
+            currentUser = null;
+            userWatchHistory = [];
+            userWatchLater = [];
+
             closeUserMenu();
-            // 動画を停止
             if (player) {
                 player.pause();
                 player.src = "";
             }
-            // メイン画面を非表示にし、ログイン画面を表示
+            
             document.getElementById('mainContent').classList.add('hidden');
             document.getElementById('mainContent').classList.remove('flex');
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('loginScreen').classList.add('flex');
             
-            // フォームをクリアしてローディングを隠す
             document.getElementById('userId').value = "";
             document.getElementById('userPwd').value = "";
             document.getElementById('loadingArea').classList.add('hidden');
@@ -678,13 +691,15 @@
             }
         });
 
+        // 視聴履歴の記録
         function recordHistory(videoId) {
+            if (!currentUser) return;
             const now = new Date();
             const timeString = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
             userWatchHistory = userWatchHistory.filter(item => item.id !== videoId);
             userWatchHistory.unshift({ id: videoId, watchedAt: timeString });
             if (userWatchHistory.length > 30) userWatchHistory.pop();
-            setStoredData('cinemastream_history', userWatchHistory);
+            setStoredData('cinemastream_history_' + currentUser, userWatchHistory);
         }
 
         function openHistoryModal() {
@@ -724,13 +739,16 @@
         }
 
         function clearHistory() {
+            if (!currentUser) return;
             userWatchHistory = [];
-            setStoredData('cinemastream_history', []);
+            setStoredData('cinemastream_history_' + currentUser, []);
             openHistoryModal();
             showToast("🧹 視聴履歴を消去しました");
         }
 
+        // あとで見る（トグル）
         function toggleWatchLater() {
+            if (!currentUser) return;
             const index = userWatchLater.indexOf(activeId);
             if (index >= 0) {
                 userWatchLater.splice(index, 1);
@@ -739,10 +757,11 @@
                 userWatchLater.push(activeId);
                 showToast("📌 「あとで見る」に追加しました");
             }
-            setStoredData('cinemastream_watchlater', userWatchLater);
+            setStoredData('cinemastream_watchlater_' + currentUser, userWatchLater);
             updateWatchLaterBtnUI();
         }
 
+        // ブックマークアイコンの状態更新
         function updateWatchLaterBtnUI() {
             const isAdded = userWatchLater.includes(activeId);
             const btn = document.getElementById('watchLaterBtn');
@@ -786,10 +805,11 @@
 
         function removeFromWatchLater(id, e) {
             if (e) e.stopPropagation();
+            if (!currentUser) return;
             const index = userWatchLater.indexOf(id);
             if (index >= 0) {
                 userWatchLater.splice(index, 1);
-                setStoredData('cinemastream_watchlater', userWatchLater);
+                setStoredData('cinemastream_watchlater_' + currentUser, userWatchLater);
                 openWatchLaterModal();
                 updateWatchLaterBtnUI();
                 showToast("🗑️ リストから削除しました");
