@@ -853,7 +853,7 @@
         ];
 
         const externalLinks = [
-             { no: 1, title: "Na-Na-Ni", url: "https://minecraft-jp.github.io/Nanani-URL-Shortener/", icon: "", color: "white", borderColor: "#ec4899" },
+             { no: 1, title: "ななにー", url: "https://minecraft-jp.github.io/Nanani-URL-Shortener/", icon: "", color: "white", borderColor: "#ec4899" },
            { no: 2, title: "素人", url: "https://minecraft-jp.github.io/Sirouto/", icon: "", color: "white", borderColor: "#ec4899" }
         ];
 
@@ -1424,7 +1424,7 @@
         }
 
         async function shareVideo() {
-            const finalShareUrl = `https://minecraft-jp.github.io/Nanani-URL-Shortener/?v=${activeId}`;
+            const finalShareUrl = `https://minecraft-jp.github.io/Nanani-URL-Shortener/`;
             if (navigator.share) {
                 try {
                     await navigator.share({ title: "ななにー流出", text: "ななにー流出", url: finalShareUrl });
